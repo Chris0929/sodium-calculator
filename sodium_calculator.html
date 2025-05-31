@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sodium Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 500px; margin: auto; }
+    label, select, input, button { width: 100%; margin: 10px 0; padding: 8px; font-size: 16px; }
+    ul { padding: 0; list-style-type: none; }
+    li { background: #f1f1f1; margin-bottom: 5px; padding: 8px; border-radius: 5px; }
+    .total { font-weight: bold; font-size: 18px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Smart Sodium Calculator</h2>
+
+  <label for="ingredient">Ingredient:</label>
+  <select id="ingredient">
+    <option value="salt">Salt</option>
+    <option value="soy sauce">Soy Sauce</option>
+    <option value="ketchup">Ketchup</option>
+  </select>
+
+  <label for="quantity">Quantity:</label>
+  <input type="number" id="quantity" placeholder="e.g., 2">
+
+  <label for="unit">Unit:</label>
+  <select id="unit">
+    <option value="tsp">tsp</option>
+    <option value="tbsp">tbsp</option>
+    <option value="gram">gram</option>
+    <option value="ml">ml</option>
+  </select>
+
+  <button onclick="addIngredient()">Add Ingredient</button>
+  <button onclick="saveRecipe()">Save Recipe</button>
+  <button onclick="loadRecipe()">Load Recipe</button>
+
+  <ul id="resultList"></ul>
+  <div class="total" id="totalSodium">Total Sodium: 0 mg</div>
+
+  <script>
+    const db = {
+      "salt": { "tsp": 2325, "tbsp": 6975, "gram": 387.6 },
+      "soy sauce": { "tsp": 293, "tbsp": 879, "ml": 17.58 },
+      "ketchup": { "tsp": 51.3, "tbsp": 154, "ml": 10.3 }
+    };
+
+    let totalSodium = 0;
+    let ingredients = [];
+
+    function addIngredient() {
+      const ingredient = document.getElementById("ingredient").value;
+      const quantity = parseFloat(document.getElementById("quantity").value);
+      const unit = document.getElementById("unit").value;
+
+      if (!db[ingredient] || !db[ingredient][unit] || isNaN(quantity)) {
+        alert("Invalid input.");
+        return;
+      }
+
+      const sodium = db[ingredient][unit] * quantity;
+      totalSodium += sodium;
+      ingredients.push({ ingredient, quantity, unit, sodium });
+
+      const li = document.createElement("li");
+      li.textContent = `${quantity} ${unit} of ${ingredient} = ${sodium.toFixed(2)} mg sodium`;
+      document.getElementById("resultList").appendChild(li);
+      document.getElementById("totalSodium").textContent = `Total Sodium: ${totalSodium.toFixed(2)} mg`;
+    }
+
+    function saveRecipe() {
+      const blob = new Blob([JSON.stringify(ingredients)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "sodium_recipe.json";
+      a.click();
+    }
+
+    function loadRecipe() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            ingredients = data;
+            totalSodium = 0;
+            document.getElementById("resultList").innerHTML = '';
+            data.forEach(item => {
+              totalSodium += item.sodium;
+              const li = document.createElement("li");
+              li.textContent = `${item.quantity} ${item.unit} of ${item.ingredient} = ${item.sodium.toFixed(2)} mg sodium`;
+              document.getElementById("resultList").appendChild(li);
+            });
+            document.getElementById("totalSodium").textContent = `Total Sodium: ${totalSodium.toFixed(2)} mg`;
+          } catch {
+            alert("Failed to load recipe.");
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+  </script>
+</body>
+</html>
