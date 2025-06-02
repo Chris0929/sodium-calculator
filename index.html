@@ -1,334 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Recipe Nutrient Analyzer</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 650px;
-      margin: 40px auto;
-      padding: 25px 30px;
-      background: #fff8f0;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 180, 150, 0.3);
-      color: #5a3e36;
-    }
-    h1 {
-      text-align: center;
-      color: #d66a42;
-      margin-bottom: 25px;
-      font-weight: 700;
-    }
-    textarea, input[type=number] {
-      width: 100%;
-      font-size: 1.1rem;
-      padding: 12px 15px;
-      border-radius: 10px;
-      border: 2px solid #f3b99c;
-      background: #fff0e6;
-      color: #5a3e36;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease;
-    }
-    textarea {
-      height: 160px;
-      resize: vertical;
-    }
-    textarea:focus, input[type=number]:focus {
-      border-color: #d66a42;
-      outline: none;
-      background: #fff6f1;
-    }
-    label {
-      display: block;
-      margin-top: 20px;
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #b45a33;
-    }
-    button {
-      background-color: #d66a42;
-      color: #fff8f0;
-      border: none;
-      cursor: pointer;
-      padding: 14px 25px;
-      font-weight: 700;
-      border-radius: 12px;
-      margin-top: 30px;
-      font-size: 1.2rem;
-      width: 100%;
-      box-shadow: 0 6px 15px rgba(214, 106, 66, 0.4);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-    button:hover {
-      background-color: #bf5b2f;
-      box-shadow: 0 8px 20px rgba(191, 91, 47, 0.6);
-    }
-    #results {
-      margin-top: 35px;
-    }
-    .ingredient-result, .totals {
-      background: #fff0e6;
-      margin-bottom: 18px;
-      padding: 18px 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(214, 106, 66, 0.15);
-    }
-    .ingredient-result strong, .totals strong {
-      color: #b45a33;
-    }
-    .error {
-      color: #c94e4e;
-      font-weight: 700;
-      margin-bottom: 12px;
-      font-size: 1.05rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 1rem;
-    }
-    th, td {
-      padding: 8px 14px;
-      border: 1px solid #f3b99c;
-      text-align: right;
-      color: #5a3e36;
-    }
-    th {
-      background-color: #ffd9c3;
-      font-weight: 700;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nutrient Calculator with Accurate Unit Conversions</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; }
+  textarea { width: 100%; height: 150px; }
+  button { margin-top: 10px; padding: 10px 20px; font-size: 1rem; }
+  .error { color: red; }
+  .result { margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; }
+</style>
 </head>
 <body>
 
-<h1>Recipe Nutrient Analyzer</h1>
+<h1>Nutrient Calculator</h1>
 
-<label for="recipeInput">Enter your recipe ingredients (one per line):</label>
-<textarea id="recipeInput" placeholder="e.g.
-1 cup cooked rice
-2 tbsp soy sauce
-100 g chicken breast
-1/4 tsp salt
-"></textarea>
-
-<label for="servingsInput">Number of servings:</label>
-<input type="number" id="servingsInput" value="1" min="1" />
-
-<button id="analyzeBtn">Analyze Nutrients</button>
+<textarea id="ingredientsInput" placeholder="Enter ingredients, e.g. '1/2 tsp salt'"></textarea>
+<br />
+<button id="calculateBtn">Calculate Nutrients</button>
 
 <div id="results"></div>
 
 <script>
-  const API_KEY = 'TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ';
+// Your generic unit to grams conversion (can be adjusted)
+const unitToGrams = {
+  tsp: 5,
+  tbsp: 15,
+  cup: 240,
+  oz: 28.35,
+  lb: 453.6,
+  g: 1,
+  kg: 1000,
+  ml: 1,
+  l: 1000,
+  // Add more generic units as needed
+};
 
-  const unitToGrams = {
-    g: 1, gram: 1, grams: 1,
-    kg: 1000, kilogram: 1000, kilograms: 1000,
-    ml: 1, l: 1000, litre: 1000, litres: 1000,
-    tsp: 4.2, tbsp: 14.3, cup: 240
-  };
+// Special overrides for ingredient + unit to grams conversion
+const specialUnitWeights = {
+  'salt|tsp': 6,
+  'baking powder|tsp': 4.6,
+  'baking soda|tsp': 4.8,
+  'honey|tbsp': 21,
+  'olive oil|tbsp': 13.5,
+  'all-purpose flour|cup': 125,
+  'granulated sugar|cup': 200,
+  'butter|tbsp': 14,
+  // Add more overrides as needed
+};
 
-  function parseIngredientLine(line) {
-    const regex = /^\s*(\d+(?:\/\d+)?(?:\.\d+)?|\d*\.\d+)?\s*(\w+)?\s*(.*)$/i;
-    const match = line.match(regex);
-    if (!match) return null;
+// Function to parse ingredient line, simplistic version for demo
+function parseIngredientLine(line) {
+  // Regex to parse quantity, unit, and ingredient name
+  // Example line: "1/2 tsp salt"
+  const regex = /^\s*([\d\/\.]+)\s*([a-zA-Z]+)?\s*(.*)$/;
+  const match = line.match(regex);
+  if (!match) return null;
 
-    let quantity = match[1];
-    let unit = match[2];
-    let ingredient = match[3];
+  let quantity = match[1];
+  const unit = match[2] ? match[2].toLowerCase() : '';
+  const ingredient = match[3].toLowerCase().trim();
 
-    if (!quantity) quantity = 1;
-    else if (quantity.includes('/')) {
-      const parts = quantity.split('/');
+  // Convert quantity from fraction if needed
+  if (quantity.includes('/')) {
+    const parts = quantity.split('/');
+    if (parts.length === 2) {
       quantity = parseFloat(parts[0]) / parseFloat(parts[1]);
     } else {
       quantity = parseFloat(quantity);
     }
-
-    if (unit && !unitToGrams[unit.toLowerCase()]) {
-      ingredient = unit + ' ' + ingredient;
-      unit = null;
-    }
-
-    return { quantity, unit: unit ? unit.toLowerCase() : null, ingredient: ingredient.trim() };
+  } else {
+    quantity = parseFloat(quantity);
   }
 
-  async function fetchFoodData(query) {
-    const encoded = encodeURIComponent(query);
-    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encoded}&pageSize=1&api_key=${API_KEY}`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const data = await res.json();
-      return data.foods?.[0] || null;
-    } catch {
-      return null;
+  if (isNaN(quantity)) return null;
+
+  return { quantity, unit, ingredient };
+}
+
+// Simulated async fetch for demo - replace with real API call
+async function fetchFoodData(ingredient) {
+  // Simulated nutrient data per 100g for a few ingredients (mock)
+  const db = {
+    salt: { sodium_mg: 38758, calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0 },
+    'all-purpose flour': { calories: 364, protein_g: 10, fat_g: 1, carbs_g: 76 },
+    honey: { calories: 304, protein_g: 0.3, fat_g: 0, carbs_g: 82 },
+    'olive oil': { calories: 884, protein_g: 0, fat_g: 100, carbs_g: 0 },
+    'granulated sugar': { calories: 387, protein_g: 0, fat_g: 0, carbs_g: 100 },
+    butter: { calories: 717, protein_g: 0.85, fat_g: 81, carbs_g: 0.06 },
+  };
+  return db[ingredient] || null;
+}
+
+document.getElementById('calculateBtn').addEventListener('click', async () => {
+  const input = document.getElementById('ingredientsInput').value.trim();
+  const lines = input.split('\n').filter(line => line.trim() !== '');
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = '';
+
+  for (const line of lines) {
+    const parsed = parseIngredientLine(line);
+    if (!parsed || !parsed.ingredient) {
+      resultsDiv.innerHTML += `<p class="error">Could not parse ingredient line: "${line}"</p>`;
+      continue;
     }
+
+    const food = await fetchFoodData(parsed.ingredient);
+    if (!food) {
+      resultsDiv.innerHTML += `<p class="error">No nutrient data found for: "${parsed.ingredient}"</p>`;
+      continue;
+    }
+
+    let grams = parsed.quantity;
+
+    // Compose key for special overrides
+    const key = parsed.ingredient + '|' + parsed.unit;
+
+    if (parsed.unit && specialUnitWeights[key]) {
+      grams *= specialUnitWeights[key];
+    } else if (parsed.unit && unitToGrams[parsed.unit]) {
+      grams *= unitToGrams[parsed.unit];
+    }
+    // else grams = quantity assumed grams if no unit
+
+    const factor = grams / 100;
+
+    // Calculate nutrients based on grams
+    const calories = (food.calories || 0) * factor;
+    const protein = (food.protein_g || 0) * factor;
+    const fat = (food.fat_g || 0) * factor;
+    const carbs = (food.carbs_g || 0) * factor;
+    const sodium = (food.sodium_mg || 0) * factor;
+
+    resultsDiv.innerHTML += `
+      <div class="result">
+        <strong>${line}</strong> (~${grams.toFixed(2)} g)<br />
+        Calories: ${calories.toFixed(1)} kcal<br />
+        Protein: ${protein.toFixed(1)} g<br />
+        Fat: ${fat.toFixed(1)} g<br />
+        Carbs: ${carbs.toFixed(1)} g<br />
+        Sodium: ${sodium.toFixed(1)} mg
+      </div>
+    `;
   }
-
-  function getNutrientValue(food, nutrientName) {
-    if (!food?.foodNutrients) return 0;
-    const nutrient = food.foodNutrients.find(n => n.nutrientName.toLowerCase() === nutrientName.toLowerCase());
-    return nutrient?.value || 0;
-  }
-
-  document.getElementById('analyzeBtn').addEventListener('click', async () => {
-    const input = document.getElementById('recipeInput').value.trim();
-    const servings = parseFloat(document.getElementById('servingsInput').value) || 1;
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = '';
-
-    if (!input) {
-      resultsDiv.innerHTML = '<p class="error">Please enter your recipe ingredients.</p>';
-      return;
-    }
-
-    const lines = input.split('\n').filter(line => line.trim() !== '');
-    if (lines.length === 0) {
-      resultsDiv.innerHTML = '<p class="error">Please enter at least one ingredient line.</p>';
-      return;
-    }
-
-    let total = {
-      calories: 0,
-      sodium: 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      phosphorus: 0,
-      sugar: 0,
-      iron: 0,
-      potassium: 0,
-      magnesium: 0
-    };
-
-    for (const line of lines) {
-      const parsed = parseIngredientLine(line);
-      if (!parsed || !parsed.ingredient) {
-        resultsDiv.innerHTML += `<p class="error">Could not parse ingredient line: "${line}"</p>`;
-        continue;
-      }
-
-      const food = await fetchFoodData(parsed.ingredient);
-      if (!food) {
-        resultsDiv.innerHTML += `<p class="error">No nutrient data found for: "${parsed.ingredient}"</p>`;
-        continue;
-      }
-
-      let grams = parsed.quantity;
-      if (parsed.unit) grams *= (unitToGrams[parsed.unit] || 1);
-      const factor = grams / 100;
-
-      const cals = getNutrientValue(food, 'Energy') * factor;
-      const sodium = getNutrientValue(food, 'Sodium, Na') * factor;
-      const protein = getNutrientValue(food, 'Protein') * factor;
-      const fat = getNutrientValue(food, 'Total lipid (fat)') * factor;
-      const carbs = getNutrientValue(food, 'Carbohydrate, by difference') * factor;
-      const phosphorus = getNutrientValue(food, 'Phosphorus, P') * factor;
-      const sugar = getNutrientValue(food, 'Sugars, total including NLEA') * factor;
-      const iron = getNutrientValue(food, 'Iron, Fe') * factor;
-      const potassium = getNutrientValue(food, 'Potassium, K') * factor;
-      const magnesium = getNutrientValue(food, 'Magnesium, Mg') * factor;
-
-      total.calories += cals;
-      total.sodium += sodium;
-      total.protein += protein;
-      total.fat += fat;
-      total.carbs += carbs;
-      total.phosphorus += phosphorus;
-      total.sugar += sugar;
-      total.iron += iron;
-      total.potassium += potassium;
-      total.magnesium += magnesium;
-
-      resultsDiv.innerHTML += `
-        <div class="ingredient-result">
-          <strong>${line}</strong>
-          <table>
-            <tr>
-              <th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th>
-              <th>Phosphorus (mg)</th><th>Sugar (g)</th><th>Iron (mg)</th><th>Potassium (mg)</th><th>Magnesium (mg)</th>
-            </tr>
-            <tr>
-              <td>${cals.toFixed(1)}</td>
-              <td>${sodium.toFixed(1)}</td>
-              <td>${protein.toFixed(1)}</td>
-              <td>${fat.toFixed(1)}</td>
-              <td>${carbs.toFixed(1)}</td>
-              <td>${phosphorus.toFixed(1)}</td>
-              <td>${sugar.toFixed(1)}</td>
-              <td>${iron.toFixed(2)}</td>
-              <td>${potassium.toFixed(1)}</td>
-              <td>${magnesium.toFixed(1)}</td>
-            </tr>
-          </table>
-        </div>
-      `;
-    }
-
-    if (lines.length > 0) {
-      const perServing = {
-        calories: total.calories / servings,
-        sodium: total.sodium / servings,
-        protein: total.protein / servings,
-        fat: total.fat / servings,
-        carbs: total.carbs / servings,
-        phosphorus: total.phosphorus / servings,
-        sugar: total.sugar / servings,
-        iron: total.iron / servings,
-        potassium: total.potassium / servings,
-        magnesium: total.magnesium / servings
-      };
-
-      resultsDiv.innerHTML += `
-        <div class="totals">
-          <strong>Total for ${servings} serving(s):</strong>
-          <table>
-            <tr>
-              <th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th>
-              <th>Phosphorus</th><th>Sugar</th><th>Iron</th><th>Potassium</th><th>Magnesium</th>
-            </tr>
-            <tr>
-              <td>${total.calories.toFixed(1)}</td>
-              <td>${total.sodium.toFixed(1)}</td>
-              <td>${total.protein.toFixed(1)}</td>
-              <td>${total.fat.toFixed(1)}</td>
-              <td>${total.carbs.toFixed(1)}</td>
-              <td>${total.phosphorus.toFixed(1)}</td>
-              <td>${total.sugar.toFixed(1)}</td>
-              <td>${total.iron.toFixed(2)}</td>
-              <td>${total.potassium.toFixed(1)}</td>
-              <td>${total.magnesium.toFixed(1)}</td>
-            </tr>
-          </table>
-          <br />
-          <strong>Per serving:</strong>
-          <table>
-            <tr>
-              <th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th>
-              <th>Phosphorus</th><th>Sugar</th><th>Iron</th><th>Potassium</th><th>Magnesium</th>
-            </tr>
-            <tr>
-              <td>${perServing.calories.toFixed(1)}</td>
-              <td>${perServing.sodium.toFixed(1)}</td>
-              <td>${perServing.protein.toFixed(1)}</td>
-              <td>${perServing.fat.toFixed(1)}</td>
-              <td>${perServing.carbs.toFixed(1)}</td>
-              <td>${perServing.phosphorus.toFixed(1)}</td>
-              <td>${perServing.sugar.toFixed(1)}</td>
-              <td>${perServing.iron.toFixed(2)}</td>
-              <td>${perServing.potassium.toFixed(1)}</td>
-              <td>${perServing.magnesium.toFixed(1)}</td>
-            </tr>
-          </table>
-        </div>
-      `;
-    }
-  });
+});
 </script>
 
 </body>
