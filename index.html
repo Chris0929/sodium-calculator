@@ -230,7 +230,11 @@
       sodium: 0,
       protein: 0,
       fat: 0,
-      carbs: 0
+      carbs: 0,
+      potassium: 0,
+      sugar: 0,
+      phosphorus: 0,
+      iron: 0
     };
 
     for (const line of lines) {
@@ -257,63 +261,4 @@
         weightGrams = parsed.quantity * (unitToGrams[parsed.unit] || 1);
       }
 
-      const scaleFactor = weightGrams / 100;
-
-      const calories = getNutrientValue(foodData, 'Energy') * scaleFactor;
-      const sodium = getNutrientValue(foodData, 'Sodium, Na') * scaleFactor;
-      const protein = getNutrientValue(foodData, 'Protein') * scaleFactor;
-      const fat = getNutrientValue(foodData, 'Total lipid (fat)') * scaleFactor;
-      const carbs = getNutrientValue(foodData, 'Carbohydrate, by difference') * scaleFactor;
-
-      const ingDiv = document.createElement('div');
-      ingDiv.className = 'ingredient-result';
-      ingDiv.innerHTML = `
-        <strong>${line}</strong>
-        <table>
-          <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
-          <tr>
-            <td>${calories.toFixed(1)}</td>
-            <td>${sodium.toFixed(1)}</td>
-            <td>${protein.toFixed(1)}</td>
-            <td>${fat.toFixed(1)}</td>
-            <td>${carbs.toFixed(1)}</td>
-          </tr>
-        </table>
-      `;
-      resultsDiv.appendChild(ingDiv);
-
-      totalNutrients.calories += calories;
-      totalNutrients.sodium += sodium;
-      totalNutrients.protein += protein;
-      totalNutrients.fat += fat;
-      totalNutrients.carbs += carbs;
-    }
-
-    // Scale totals by servings
-    totalNutrients.calories *= servings;
-    totalNutrients.sodium *= servings;
-    totalNutrients.protein *= servings;
-    totalNutrients.fat *= servings;
-    totalNutrients.carbs *= servings;
-
-    const totalDiv = document.createElement('div');
-    totalDiv.style.marginTop = '30px';
-    totalDiv.innerHTML = `
-      <h2>Total Nutrients for ${servings} serving${servings > 1 ? 's' : ''}</h2>
-      <table>
-        <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
-        <tr>
-          <td>${totalNutrients.calories.toFixed(1)}</td>
-          <td>${totalNutrients.sodium.toFixed(1)}</td>
-          <td>${totalNutrients.protein.toFixed(1)}</td>
-          <td>${totalNutrients.fat.toFixed(1)}</td>
-          <td>${totalNutrients.carbs.toFixed(1)}</td>
-        </tr>
-      </table>
-    `;
-    resultsDiv.appendChild(totalDiv);
-  });
-</script>
-
-</body>
-</html>
+      const scaleFactor = weight
