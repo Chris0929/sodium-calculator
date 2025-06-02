@@ -192,7 +192,18 @@
       return;
     }
 
-    let total = { calories: 0, sodium: 0, protein: 0, fat: 0, carbs: 0 };
+    let total = {
+      calories: 0,
+      sodium: 0,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+      phosphorus: 0,
+      sugar: 0,
+      iron: 0,
+      potassium: 0,
+      magnesium: 0
+    };
 
     for (const line of lines) {
       const parsed = parseIngredientLine(line);
@@ -216,24 +227,42 @@
       const protein = getNutrientValue(food, 'Protein') * factor;
       const fat = getNutrientValue(food, 'Total lipid (fat)') * factor;
       const carbs = getNutrientValue(food, 'Carbohydrate, by difference') * factor;
+      const phosphorus = getNutrientValue(food, 'Phosphorus, P') * factor;
+      const sugar = getNutrientValue(food, 'Sugars, total including NLEA') * factor;
+      const iron = getNutrientValue(food, 'Iron, Fe') * factor;
+      const potassium = getNutrientValue(food, 'Potassium, K') * factor;
+      const magnesium = getNutrientValue(food, 'Magnesium, Mg') * factor;
 
       total.calories += cals;
       total.sodium += sodium;
       total.protein += protein;
       total.fat += fat;
       total.carbs += carbs;
+      total.phosphorus += phosphorus;
+      total.sugar += sugar;
+      total.iron += iron;
+      total.potassium += potassium;
+      total.magnesium += magnesium;
 
       resultsDiv.innerHTML += `
         <div class="ingredient-result">
           <strong>${line}</strong>
           <table>
-            <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
+            <tr>
+              <th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th>
+              <th>Phosphorus (mg)</th><th>Sugar (g)</th><th>Iron (mg)</th><th>Potassium (mg)</th><th>Magnesium (mg)</th>
+            </tr>
             <tr>
               <td>${cals.toFixed(1)}</td>
               <td>${sodium.toFixed(1)}</td>
               <td>${protein.toFixed(1)}</td>
               <td>${fat.toFixed(1)}</td>
               <td>${carbs.toFixed(1)}</td>
+              <td>${phosphorus.toFixed(1)}</td>
+              <td>${sugar.toFixed(1)}</td>
+              <td>${iron.toFixed(2)}</td>
+              <td>${potassium.toFixed(1)}</td>
+              <td>${magnesium.toFixed(1)}</td>
             </tr>
           </table>
         </div>
@@ -246,32 +275,53 @@
         sodium: total.sodium / servings,
         protein: total.protein / servings,
         fat: total.fat / servings,
-        carbs: total.carbs / servings
+        carbs: total.carbs / servings,
+        phosphorus: total.phosphorus / servings,
+        sugar: total.sugar / servings,
+        iron: total.iron / servings,
+        potassium: total.potassium / servings,
+        magnesium: total.magnesium / servings
       };
 
       resultsDiv.innerHTML += `
         <div class="totals">
           <strong>Total for ${servings} serving(s):</strong>
           <table>
-            <tr><th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th></tr>
+            <tr>
+              <th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th>
+              <th>Phosphorus</th><th>Sugar</th><th>Iron</th><th>Potassium</th><th>Magnesium</th>
+            </tr>
             <tr>
               <td>${total.calories.toFixed(1)}</td>
               <td>${total.sodium.toFixed(1)}</td>
               <td>${total.protein.toFixed(1)}</td>
               <td>${total.fat.toFixed(1)}</td>
               <td>${total.carbs.toFixed(1)}</td>
+              <td>${total.phosphorus.toFixed(1)}</td>
+              <td>${total.sugar.toFixed(1)}</td>
+              <td>${total.iron.toFixed(2)}</td>
+              <td>${total.potassium.toFixed(1)}</td>
+              <td>${total.magnesium.toFixed(1)}</td>
             </tr>
           </table>
           <br />
           <strong>Per serving:</strong>
           <table>
-            <tr><th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th></tr>
+            <tr>
+              <th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th>
+              <th>Phosphorus</th><th>Sugar</th><th>Iron</th><th>Potassium</th><th>Magnesium</th>
+            </tr>
             <tr>
               <td>${perServing.calories.toFixed(1)}</td>
               <td>${perServing.sodium.toFixed(1)}</td>
               <td>${perServing.protein.toFixed(1)}</td>
               <td>${perServing.fat.toFixed(1)}</td>
               <td>${perServing.carbs.toFixed(1)}</td>
+              <td>${perServing.phosphorus.toFixed(1)}</td>
+              <td>${perServing.sugar.toFixed(1)}</td>
+              <td>${perServing.iron.toFixed(2)}</td>
+              <td>${perServing.potassium.toFixed(1)}</td>
+              <td>${perServing.magnesium.toFixed(1)}</td>
             </tr>
           </table>
         </div>
