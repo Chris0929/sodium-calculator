@@ -1,126 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Recipe Nutrient Analyzer</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 650px;
-    margin: 40px auto;
-    padding: 25px 30px;
-    background: #fff8f0; /* creamy warm background */
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(255, 180, 150, 0.3);
-    color: #5a3e36;
-  }
-  h1 {
-    text-align: center;
-    color: #d66a42; /* warm terracotta */
-    margin-bottom: 25px;
-    font-weight: 700;
-  }
-  textarea {
-    width: 100%;
-    height: 160px;
-    font-size: 1.1rem;
-    padding: 12px 15px;
-    border-radius: 10px;
-    border: 2px solid #f3b99c;
-    box-sizing: border-box;
-    background: #fff0e6;
-    color: #5a3e36;
-    resize: vertical;
-    transition: border-color 0.3s ease;
-  }
-  textarea:focus {
-    border-color: #d66a42;
-    outline: none;
-    background: #fff6f1;
-  }
-  label {
-    display: block;
-    margin-top: 20px;
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #b45a33;
-  }
-  input[type=number] {
-    width: 110px;
-    padding: 9px 12px;
-    font-size: 1.1rem;
-    margin-top: 8px;
-    border-radius: 10px;
-    border: 2px solid #f3b99c;
-    background: #fff0e6;
-    color: #5a3e36;
-    transition: border-color 0.3s ease;
-  }
-  input[type=number]:focus {
-    border-color: #d66a42;
-    outline: none;
-    background: #fff6f1;
-  }
-  button {
-    background-color: #d66a42;
-    color: #fff8f0;
-    border: none;
-    cursor: pointer;
-    padding: 14px 25px;
-    font-weight: 700;
-    border-radius: 12px;
-    margin-top: 30px;
-    font-size: 1.2rem;
-    width: 100%;
-    box-shadow: 0 6px 15px rgba(214, 106, 66, 0.4);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  button:hover {
-    background-color: #bf5b2f;
-    box-shadow: 0 8px 20px rgba(191, 91, 47, 0.6);
-  }
-  #results {
-    margin-top: 35px;
-  }
-  .ingredient-result {
-    background: #fff0e6;
-    margin-bottom: 18px;
-    padding: 18px 20px;
-    border-radius: 12px;
-    box-shadow: 0 0 12px rgba(214, 106, 66, 0.15);
-  }
-  .ingredient-result strong {
-    color: #b45a33;
-  }
-  .error {
-    color: #c94e4e;
-    font-weight: 700;
-    margin-bottom: 12px;
-    font-size: 1.05rem;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 12px;
-    font-size: 1rem;
-  }
-  th, td {
-    padding: 8px 14px;
-    border: 1px solid #f3b99c;
-    text-align: right;
-    color: #5a3e36;
-  }
-  th {
-    background-color: #ffd9c3;
-    font-weight: 700;
-  }
-  h2 {
-    color: #b45a33;
-    margin-bottom: 15px;
-    font-weight: 700;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recipe Nutrient Analyzer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 650px;
+      margin: 40px auto;
+      padding: 25px 30px;
+      background: #fff8f0;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 180, 150, 0.3);
+      color: #5a3e36;
+    }
+    h1 {
+      text-align: center;
+      color: #d66a42;
+      margin-bottom: 25px;
+      font-weight: 700;
+    }
+    textarea, input[type=number] {
+      width: 100%;
+      font-size: 1.1rem;
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: 2px solid #f3b99c;
+      background: #fff0e6;
+      color: #5a3e36;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+    }
+    textarea {
+      height: 160px;
+      resize: vertical;
+    }
+    textarea:focus, input[type=number]:focus {
+      border-color: #d66a42;
+      outline: none;
+      background: #fff6f1;
+    }
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #b45a33;
+    }
+    button {
+      background-color: #d66a42;
+      color: #fff8f0;
+      border: none;
+      cursor: pointer;
+      padding: 14px 25px;
+      font-weight: 700;
+      border-radius: 12px;
+      margin-top: 30px;
+      font-size: 1.2rem;
+      width: 100%;
+      box-shadow: 0 6px 15px rgba(214, 106, 66, 0.4);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    button:hover {
+      background-color: #bf5b2f;
+      box-shadow: 0 8px 20px rgba(191, 91, 47, 0.6);
+    }
+    #results {
+      margin-top: 35px;
+    }
+    .ingredient-result, .totals {
+      background: #fff0e6;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(214, 106, 66, 0.15);
+    }
+    .ingredient-result strong, .totals strong {
+      color: #b45a33;
+    }
+    .error {
+      color: #c94e4e;
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-size: 1.05rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 1rem;
+    }
+    th, td {
+      padding: 8px 14px;
+      border: 1px solid #f3b99c;
+      text-align: right;
+      color: #5a3e36;
+    }
+    th {
+      background-color: #ffd9c3;
+      font-weight: 700;
+    }
+  </style>
 </head>
 <body>
 
@@ -144,19 +125,10 @@
   const API_KEY = 'TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ';
 
   const unitToGrams = {
-    g: 1,
-    gram: 1,
-    grams: 1,
-    kg: 1000,
-    kilogram: 1000,
-    kilograms: 1000,
-    ml: 1,
-    l: 1000,
-    litre: 1000,
-    litres: 1000,
-    tsp: 4.2,
-    tbsp: 14.3,
-    cup: 240
+    g: 1, gram: 1, grams: 1,
+    kg: 1000, kilogram: 1000, kilograms: 1000,
+    ml: 1, l: 1000, litre: 1000, litres: 1000,
+    tsp: 4.2, tbsp: 14.3, cup: 240
   };
 
   function parseIngredientLine(line) {
@@ -181,9 +153,7 @@
       unit = null;
     }
 
-    ingredient = ingredient.trim();
-
-    return { quantity, unit: unit ? unit.toLowerCase() : null, ingredient };
+    return { quantity, unit: unit ? unit.toLowerCase() : null, ingredient: ingredient.trim() };
   }
 
   async function fetchFoodData(query) {
@@ -193,19 +163,16 @@
       const res = await fetch(url);
       if (!res.ok) return null;
       const data = await res.json();
-      if (data.foods && data.foods.length > 0) {
-        return data.foods[0];
-      }
-      return null;
+      return data.foods?.[0] || null;
     } catch {
       return null;
     }
   }
 
   function getNutrientValue(food, nutrientName) {
-    if (!food || !food.foodNutrients) return 0;
+    if (!food?.foodNutrients) return 0;
     const nutrient = food.foodNutrients.find(n => n.nutrientName.toLowerCase() === nutrientName.toLowerCase());
-    return nutrient ? nutrient.value : 0;
+    return nutrient?.value || 0;
   }
 
   document.getElementById('analyzeBtn').addEventListener('click', async () => {
@@ -225,120 +192,91 @@
       return;
     }
 
-    let totalNutrients = {
-      calories: 0,
-      sodium: 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0
-    };
+    let total = { calories: 0, sodium: 0, protein: 0, fat: 0, carbs: 0 };
 
     for (const line of lines) {
       const parsed = parseIngredientLine(line);
       if (!parsed || !parsed.ingredient) {
-        const errorEl = document.createElement('p');
-        errorEl.className = 'error';
-        errorEl.textContent = `Could not parse ingredient line: "${line}"`;
-        resultsDiv.appendChild(errorEl);
+        resultsDiv.innerHTML += `<p class="error">Could not parse ingredient line: "${line}"</p>`;
         continue;
       }
 
-      const foodData = await fetchFoodData(parsed.ingredient);
-      if (!foodData) {
-        const errorEl = document.createElement('p');
-        errorEl.className = 'error';
-        errorEl.textContent = `No nutrient data found for: "${parsed.ingredient}". Please try refining the ingredient name.`;
-        resultsDiv.appendChild(errorEl);
+      const food = await fetchFoodData(parsed.ingredient);
+      if (!food) {
+        resultsDiv.innerHTML += `<p class="error">No nutrient data found for: "${parsed.ingredient}"</p>`;
         continue;
       }
 
-      let weightGrams = parsed.quantity;
-      if (parsed.unit) {
-        weightGrams = parsed.quantity * (unitToGrams[parsed.unit] || 1);
-      }
+      let grams = parsed.quantity;
+      if (parsed.unit) grams *= (unitToGrams[parsed.unit] || 1);
+      const factor = grams / 100;
 
-      const scaleFactor = weightGrams / 100;
+      const cals = getNutrientValue(food, 'Energy') * factor;
+      const sodium = getNutrientValue(food, 'Sodium, Na') * factor;
+      const protein = getNutrientValue(food, 'Protein') * factor;
+      const fat = getNutrientValue(food, 'Total lipid (fat)') * factor;
+      const carbs = getNutrientValue(food, 'Carbohydrate, by difference') * factor;
 
-      const calories = getNutrientValue(foodData, 'Energy') * scaleFactor;
-      const sodium = getNutrientValue(foodData, 'Sodium, Na') * scaleFactor;
-      const protein = getNutrientValue(foodData, 'Protein') * scaleFactor;
-      const fat = getNutrientValue(foodData, 'Total lipid (fat)') * scaleFactor;
-      const carbs = getNutrientValue(foodData, 'Carbohydrate, by difference') * scaleFactor;
+      total.calories += cals;
+      total.sodium += sodium;
+      total.protein += protein;
+      total.fat += fat;
+      total.carbs += carbs;
 
-      const ingDiv = document.createElement('div');
-      ingDiv.className = 'ingredient-result';
-      ingDiv.innerHTML = `
-        <strong>${line}</strong>
-        <table>
-          <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
-          <tr>
-            <td>${calories.toFixed(1)}</td>
-            <td>${sodium.toFixed(1)}</td>
-            <td>${protein.toFixed(1)}</td>
-            <td>${fat.toFixed(1)}</td>
-            <td>${carbs.toFixed(1)}</td>
-          </tr>
-        </table>
+      resultsDiv.innerHTML += `
+        <div class="ingredient-result">
+          <strong>${line}</strong>
+          <table>
+            <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
+            <tr>
+              <td>${cals.toFixed(1)}</td>
+              <td>${sodium.toFixed(1)}</td>
+              <td>${protein.toFixed(1)}</td>
+              <td>${fat.toFixed(1)}</td>
+              <td>${carbs.toFixed(1)}</td>
+            </tr>
+          </table>
+        </div>
       `;
-      resultsDiv.appendChild(ingDiv);
-
-      totalNutrients.calories += calories;
-      totalNutrients.sodium += sodium;
-      totalNutrients.protein += protein;
-      totalNutrients.fat += fat;
-      totalNutrients.carbs += carbs;
     }
 
-    // Scale totals by servings
-    totalNutrients.calories *= servings;
-    totalNutrients.sodium *= servings;
-    totalNutrients.protein *= servings;
-    totalNutrients.fat *= servings;
-    totalNutrients.carbs *= servings;
+    if (lines.length > 0) {
+      const perServing = {
+        calories: total.calories / servings,
+        sodium: total.sodium / servings,
+        protein: total.protein / servings,
+        fat: total.fat / servings,
+        carbs: total.carbs / servings
+      };
 
-    const totalDiv = document.createElement('div');
-    totalDiv.style.marginTop = '30px';
-    totalDiv.innerHTML = `
-      <h2>Total Nutrients for ${servings} serving${servings > 1 ? 's' : ''}</h2>
-      <table>
-        <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
-        <tr>
-          <td>${totalNutrients.calories.toFixed(1)}</td>
-          <td>${totalNutrients.sodium.toFixed(1)}</td>
-          <td>${totalNutrients.protein.toFixed(1)}</td>
-          <td>${totalNutrients.fat.toFixed(1)}</td>
-          <td>${totalNutrients.carbs.toFixed(1)}</td>
-        </tr>
-      </table>
-    `;
-    resultsDiv.appendChild(totalDiv);
-  });
-</script>
-
-</body>
-</html>
-    // Scale totals by servings
-    totalNutrients.calories /= servings;
-    totalNutrients.sodium /= servings;
-    totalNutrients.protein /= servings;
-    totalNutrients.fat /= servings;
-    totalNutrients.carbs /= servings;
-
-    const totalDiv = document.createElement('div');
-    totalDiv.innerHTML = `
-      <h2>Per Serving Total Nutrients</h2>
-      <table>
-        <tr><th>Calories (kcal)</th><th>Sodium (mg)</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr>
-        <tr>
-          <td>${totalNutrients.calories.toFixed(1)}</td>
-          <td>${totalNutrients.sodium.toFixed(1)}</td>
-          <td>${totalNutrients.protein.toFixed(1)}</td>
-          <td>${totalNutrients.fat.toFixed(1)}</td>
-          <td>${totalNutrients.carbs.toFixed(1)}</td>
-        </tr>
-      </table>
-    `;
-    resultsDiv.appendChild(totalDiv);
+      resultsDiv.innerHTML += `
+        <div class="totals">
+          <strong>Total for ${servings} serving(s):</strong>
+          <table>
+            <tr><th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th></tr>
+            <tr>
+              <td>${total.calories.toFixed(1)}</td>
+              <td>${total.sodium.toFixed(1)}</td>
+              <td>${total.protein.toFixed(1)}</td>
+              <td>${total.fat.toFixed(1)}</td>
+              <td>${total.carbs.toFixed(1)}</td>
+            </tr>
+          </table>
+          <br />
+          <strong>Per serving:</strong>
+          <table>
+            <tr><th>Calories</th><th>Sodium</th><th>Protein</th><th>Fat</th><th>Carbs</th></tr>
+            <tr>
+              <td>${perServing.calories.toFixed(1)}</td>
+              <td>${perServing.sodium.toFixed(1)}</td>
+              <td>${perServing.protein.toFixed(1)}</td>
+              <td>${perServing.fat.toFixed(1)}</td>
+              <td>${perServing.carbs.toFixed(1)}</td>
+            </tr>
+          </table>
+        </div>
+      `;
+    }
   });
 </script>
 
