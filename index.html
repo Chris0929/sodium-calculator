@@ -1,113 +1,433 @@
-# Create a fully working minimal HTML + CSS + JS setup for the Recipe Nutrition Analyzer
-
-html_code = """<!DOCTYPE html>
+@@ -1,225 +1,223 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Recipe Nutrition Analyzer</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Sodium Calculator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    select, input {
+      margin: 5px;
+      padding: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    td, th {
+      padding: 8px;
+      border: 1px solid #ccc;
+    }
+    #totalSodium {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .high-sodium {
+      color: red;
+    }
+  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Advanced Sodium Calculator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ccc;
+  }
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+  label {
+    display: block;
+    margin-top: 20px;
+    font-weight: bold;
+    color: #555;
+  }
+  select, input[type=number], button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #output {
+    margin-top: 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+  }
+  .high-sodium {
+    color: red;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Recipe Nutrition Analyzer</h1>
-    <textarea id="recipeInput" placeholder="Type or paste your recipe here..."></textarea>
-    <button onclick="analyzeRecipe()">Analyze</button>
-    <div id="results"></div>
-  </div>
-  <script src="script.js" defer></script>
-</body>
-</html>
-"""
+  <h1>Sodium Calculator</h1>
 
-css_code = """body {
-  background-color: #fff6f1;
-  color: #333;
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 20px;
-}
+  <div id="ingredientsContainer"></div>
+  <button onclick="addIngredientRow()">Add Ingredient</button>
 
-.container {
-  max-width: 600px;
-  margin: auto;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
+  <p id="totalSodium">Total Sodium: 0 mg</p>
 
-textarea {
-  width: 100%;
-  height: 120px;
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-}
+  <hr>
+  <h3>Saved Recipes</h3>
+  <select id="savedRecipesDropdown">
+    <option value="">-- Select a Recipe --</option>
+  </select>
+  <button onclick="saveRecipe()">Save Recipe</button>
+  <button onclick="loadRecipe()">Load Recipe</button>
+  <button onclick="deleteRecipe()">Delete Recipe</button>
 
-button {
-  background-color: #ffb347;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  color: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-}
+  <script>
+    const sodiumData = {
+      "table salt": 2325,
+      "sea salt": 2325,
+      "kosher salt": 1920,
+      "himalayan salt": 1680,
+      "soy sauce (regular)": 879,
+      "soy sauce (low sodium)": 575,
+      "fish sauce": 1410,
+      "teriyaki sauce": 690,
+      "oyster sauce": 492,
+      "italian dressing": 300,
+      "ranch dressing": 270,
+      "caesar dressing": 360,
+      "balsamic vinaigrette": 120,
+      "ketchup": 160,
+      "mustard": 60,
+      "mayonnaise": 90,
+      "seasoning salt": 1500,
+      "bouillon cube": 1000,
+      "msg": 500,
+      "garlic salt": 1440,
+      "onion salt": 1320,
+      "adobo seasoning": 1400,
+      "bagoong alamang": 1540,
+      "bagoong isda": 1950
+    };
 
-button:hover {
-  background-color: #ffa534;
-}
+    const volumes = {
+      "1/4 tsp": 0.25,
+      "1/2 tsp": 0.5,
+      "1 tsp": 1,
+      "1/2 tbsp": 1.5,
+      "1 tbsp": 3,
+      "2 tbsp": 6,
+      "1/4 cup": 12,
+      "1/2 cup": 24,
+      "1 cup": 48
+    };
 
-#results {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #fdf2e9;
-  border-radius: 8px;
-}
-"""
+    function addIngredientRow(selected = "", amount = "1", unit = "1 tsp") {
+      const container = document.getElementById("ingredientsContainer");
 
-js_code = """function analyzeRecipe() {
-  const input = document.getElementById("recipeInput").value;
-  const results = document.getElementById("results");
+      const row = document.createElement("div");
+      row.classList.add("ingredient-row");
 
-  if (!input.trim()) {
-    results.innerHTML = "<p>Please enter a recipe.</p>";
-    return;
-  }
+      const ingredientSelect = document.createElement("select");
+      ingredientSelect.classList.add("ingredient");
+      for (const name in sodiumData) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        if (name === selected) option.selected = true;
+        ingredientSelect.appendChild(option);
+      }
 
-  // Simulated response – replace with real USDA API logic
-  const mockData = {
-    sodium: 2300,
-    protein: 20,
-    calories: 450
+      const amountInput = document.createElement("input");
+      amountInput.classList.add("amount");
+      amountInput.type = "number";
+      amountInput.min = "0";
+      amountInput.value = amount;
+
+      const unitSelect = document.createElement("select");
+      unitSelect.classList.add("unit");
+      for (const v in volumes) {
+        const option = document.createElement("option");
+        option.value = v;
+        option.textContent = v;
+        if (v === unit) option.selected = true;
+        unitSelect.appendChild(option);
+      }
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "Remove";
+      removeBtn.onclick = () => {
+        row.remove();
+        calculateSodium();
+      };
+
+      ingredientSelect.onchange = calculateSodium;
+      amountInput.oninput = calculateSodium;
+      unitSelect.onchange = calculateSodium;
+
+      row.appendChild(ingredientSelect);
+      row.appendChild(amountInput);
+      row.appendChild(unitSelect);
+      row.appendChild(removeBtn);
+      container.appendChild(row);
+
+      calculateSodium();
+    }
+
+    function calculateSodium() {
+      let total = 0;
+      document.querySelectorAll(".ingredient-row").forEach(row => {
+        const ingredient = row.querySelector(".ingredient").value;
+        const amount = parseFloat(row.querySelector(".amount").value) || 0;
+        const unit = row.querySelector(".unit").value;
+        const perTsp = sodiumData[ingredient] || 0;
+        const multiplier = volumes[unit] || 1;
+        total += perTsp * amount * (multiplier / 3); // 3 tsp in 1 tbsp
+      });
+
+      const totalSodium = document.getElementById("totalSodium");
+      totalSodium.textContent = `Total Sodium: ${Math.round(total)} mg`;
+      totalSodium.className = total > 2000 ? "high-sodium" : "";
+<h1>Advanced Sodium Calculator</h1>
+
+<label for="ingredientSelect">Select Ingredient:</label>
+<select id="ingredientSelect">
+  <!-- Bagoong -->
+  <option value="bagoongAlamang">Bagoong Alamang</option>
+  <option value="bagoongIsda">Bagoong Isda</option>
+
+  <!-- Salts -->
+  <option value="tableSalt">Table Salt</option>
+  <option value="seaSalt">Sea Salt</option>
+  <option value="kosherSalt">Kosher Salt</option>
+  <option value="pinkHimalayanSalt">Pink Himalayan Salt</option>
+  <option value="celerySalt">Celery Salt</option>
+
+  <!-- Soy Sauces -->
+  <option value="soySauceRegular">Soy Sauce (Regular)</option>
+  <option value="soySauceLowSodium">Soy Sauce (Low Sodium)</option>
+  <option value="tamari">Tamari Sauce</option>
+  <option value="shoyu">Shoyu Sauce</option>
+
+  <!-- Dressings -->
+  <option value="ranchDressing">Ranch Dressing</option>
+  <option value="caesarDressing">Caesar Dressing</option>
+  <option value="italianDressing">Italian Dressing</option>
+  <option value="blueCheeseDressing">Blue Cheese Dressing</option>
+  <option value="vinaigrette">Vinaigrette</option>
+
+  <!-- Seasonings & Flavor Enhancers -->
+  <option value="garlicPowder">Garlic Powder</option>
+  <option value="onionPowder">Onion Powder</option>
+  <option value="bouillonCube">Bouillon Cube</option>
+  <option value="fishSauce">Fish Sauce</option>
+  <option value="barbecueSauce">Barbecue Sauce</option>
+  <option value="mustard">Mustard</option>
+  <option value="ketchup">Ketchup</option>
+  <option value="msg">MSG (Monosodium Glutamate)</option>
+</select>
+
+<label for="volumeSelect">Select Volume:</label>
+<select id="volumeSelect">
+  <optgroup label="tsp">
+    <option value="0.25">1/4 tsp</option>
+    <option value="0.5">1/2 tsp</option>
+    <option value="1">1 tsp</option>
+  </optgroup>
+  <optgroup label="tbsp">
+    <option value="0.25">1/4 tbsp</option>
+    <option value="0.5">1/2 tbsp</option>
+    <option value="1">1 tbsp</option>
+  </optgroup>
+  <optgroup label="cup">
+    <option value="0.25">1/4 cup</option>
+    <option value="0.5">1/2 cup</option>
+    <option value="1">1 cup</option>
+  </optgroup>
+</select>
+
+<button onclick="calculateSodium()">Calculate Sodium</button>
+
+<p id="output"></p>
+
+<script>
+  // Sodium in mg per unit (base unit for each ingredient will be tsp, tbsp, or cup as noted)
+  // Units listed as sodium per 1 tsp, 1 tbsp, or 1 cup, whichever applies
+  // We'll convert volumes to the same base unit internally (1 tbsp = 3 tsp, 1 cup = 16 tbsp)
+  // For simplicity, sodium per tsp, tbsp or cup must be known or approximated
+
+  const sodiumDatabase = {
+    bagoongAlamang: { sodiumPerTbsp: 1200, baseUnit: "tbsp" }, 
+    // approximate mg sodium per tbsp
+    bagoongIsda: { sodiumPerTbsp: 1500, baseUnit: "tbsp" },   
+    // approximate mg sodium per tbsp
+    // Salts (assumed per tsp = 2325 mg, per tbsp = 3 * 2325, per cup = 16 * 3 * 2325)
+    tableSalt: { sodiumPerTsp: 2325, baseUnit: "tsp" },
+    seaSalt: { sodiumPerTsp: 2300, baseUnit: "tsp" },
+    kosherSalt: { sodiumPerTsp: 2000, baseUnit: "tsp" },
+    pinkHimalayanSalt: { sodiumPerTsp: 2200, baseUnit: "tsp" },
+    celerySalt: { sodiumPerTsp: 1100, baseUnit: "tsp" },
+
+    // Soy Sauces (per tbsp typical)
+    soySauceRegular: { sodiumPerTbsp: 900, baseUnit: "tbsp" },
+    soySauceLowSodium: { sodiumPerTbsp: 500, baseUnit: "tbsp" },
+    tamari: { sodiumPerTbsp: 920, baseUnit: "tbsp" },
+    shoyu: { sodiumPerTbsp: 900, baseUnit: "tbsp" },
+
+    // Dressings (per tbsp typical)
+    ranchDressing: { sodiumPerTbsp: 150, baseUnit: "tbsp" },
+    caesarDressing: { sodiumPerTbsp: 160, baseUnit: "tbsp" },
+    italianDressing: { sodiumPerTbsp: 120, baseUnit: "tbsp" },
+    blueCheeseDressing: { sodiumPerTbsp: 190, baseUnit: "tbsp" },
+    vinaigrette: { sodiumPerTbsp: 100, baseUnit: "tbsp" },
+
+    // Seasonings & Flavor enhancers
+    garlicPowder: { sodiumPerTsp: 1, baseUnit: "tsp" },
+    onionPowder: { sodiumPerTsp: 2, baseUnit: "tsp" },
+    bouillonCube: { sodiumPerTbsp: 900, baseUnit: "tbsp" }, // approximate per tbsp of dissolved cube
+    fishSauce: { sodiumPerTbsp: 1400, baseUnit: "tbsp" },
+    barbecueSauce: { sodiumPerTbsp: 180, baseUnit: "tbsp" },
+    mustard: { sodiumPerTbsp: 200, baseUnit: "tbsp" },
+    ketchup: { sodiumPerTbsp: 150, baseUnit: "tbsp" },
+    msg: { sodiumPerTsp: 700, baseUnit: "tsp" }
   };
 
-  let sodiumColor = mockData.sodium > 2000 ? 'red' : 'black';
+  // Unit conversion factors to tsp
+  const unitToTsp = {
+    tsp: 1,
+    tbsp: 3,
+    cup: 48 // 1 cup = 16 tbsp * 3 tsp/tbsp = 48 tsp
+  };
 
-  results.innerHTML = `
-    <p><strong>Sodium:</strong> <span style="color:${sodiumColor}">${mockData.sodium}mg</span></p>
-    <p><strong>Protein:</strong> ${mockData.protein}g</p>
-    <p><strong>Calories:</strong> ${mockData.calories} kcal</p>
-  `;
-}
-"""
+  function calculateSodium() {
+    const ingredientKey = document.getElementById("ingredientSelect").value;
+    const volumeValue = parseFloat(document.getElementById("volumeSelect").value);
+    const volumeText = document.getElementById("volumeSelect").selectedOptions[0].text;
+    const volumeGroup = document.getElementById("volumeSelect").selectedOptions[0].parentElement.label; // tsp, tbsp, or cup
 
-# Save files
-project_dir = "/mnt/data/RecipeNutritionAnalyzer_Fixed"
-os.makedirs(project_dir, exist_ok=True)
+    if (!ingredientKey || isNaN(volumeValue)) {
+      alert("Please select ingredient and volume.");
+      return;
+    }
 
-with open(os.path.join(project_dir, "index.html"), "w") as f:
-    f.write(html_code)
+    // Save/Load/Delete Recipes
+    function saveRecipe() {
+      const recipeName = prompt("Enter a name for this recipe:");
+      if (!recipeName) return;
 
-with open(os.path.join(project_dir, "style.css"), "w") as f:
-    f.write(css_code)
+      const data = {
+        ingredients: [...document.querySelectorAll(".ingredient-row")].map(row => ({
+          ingredient: row.querySelector(".ingredient").value,
+          amount: row.querySelector(".amount").value,
+          unit: row.querySelector(".unit").value
+        }))
+      };
 
-with open(os.path.join(project_dir, "script.js"), "w") as f:
-    f.write(js_code)
+      localStorage.setItem(`recipe_${recipeName}`, JSON.stringify(data));
+      updateRecipeDropdown();
+      alert("Recipe saved!");
+    const sodiumInfo = sodiumDatabase[ingredientKey];
+    if (!sodiumInfo) {
+      alert("Ingredient data not found.");
+      return;
+    }
 
-# Create a zip archive
-zip_path = shutil.make_archive(project_dir, 'zip', project_dir)
-zip_path
+    function loadRecipe() {
+      const recipeName = document.getElementById("savedRecipesDropdown").value;
+      if (!recipeName) return;
+
+      const data = JSON.parse(localStorage.getItem(`recipe_${recipeName}`));
+      if (!data) return;
+
+      const container = document.getElementById("ingredientsContainer");
+      container.innerHTML = "";
+
+      data.ingredients.forEach(item => {
+        addIngredientRow(item.ingredient, item.amount, item.unit);
+      });
+
+      calculateSodium();
+    }
+
+    function deleteRecipe() {
+      const recipeName = document.getElementById("savedRecipesDropdown").value;
+      if (!recipeName) return;
+
+      if (confirm(`Delete recipe "${recipeName}"?`)) {
+        localStorage.removeItem(`recipe_${recipeName}`);
+        updateRecipeDropdown();
+      }
+    // Convert input volume to base unit of sodium data
+    // Step 1: convert input volume to tsp equivalent
+    const inputVolumeInTsp = volumeValue * unitToTsp[volumeGroup];
+
+    // Step 2: convert tsp to sodium using sodiumInfo's base unit
+    // sodiumInfo base unit might be tsp or tbsp
+    let sodiumMg = 0;
+
+    if (sodiumInfo.baseUnit === "tsp") {
+      sodiumMg = sodiumInfo.sodiumPerTsp * inputVolumeInTsp;
+    } else if (sodiumInfo.baseUnit === "tbsp") {
+      // convert tsp to tbsp
+      const inputVolumeInTbsp = inputVolumeInTsp / 3;
+      sodiumMg = sodiumInfo.sodiumPerTbsp * inputVolumeInTbsp;
+    } else if (sodiumInfo.baseUnit === "cup") {
+      const inputVolumeInCup = inputVolumeInTsp / 48;
+      sodiumMg = sodiumInfo.sodiumPerCup * inputVolumeInCup;
+    } else {
+      alert("Unknown base unit for sodium data.");
+      return;
+    }
+
+    function updateRecipeDropdown() {
+      const dropdown = document.getElementById("savedRecipesDropdown");
+      dropdown.innerHTML = '<option value="">-- Select a Recipe --</option>';
+
+      Object.keys(localStorage)
+        .filter(key => key.startsWith("recipe_"))
+        .forEach(key => {
+          const name = key.replace("recipe_", "");
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          dropdown.appendChild(option);
+        });
+    // Display result, red if sodium > 2000 mg
+    const outputEl = document.getElementById("output");
+    const formattedSodium = sodiumMg.toLocaleString(undefined, {maximumFractionDigits:2});
+    if (sodiumMg > 2000) {
+      outputEl.innerHTML = `<span class="high-sodium">${volumeText} of ${document.getElementById("ingredientSelect").selectedOptions[0].text} contains approximately <br><strong>${formattedSodium} mg</strong> of sodium.</span>`;
+    } else {
+      outputEl.textContent = `${volumeText} of ${document.getElementById("ingredientSelect").selectedOptions[0].text} contains approximately ${formattedSodium} mg of sodium.`;
+    }
+  }
+</script>
+
+    // Init
+    updateRecipeDropdown();
+    addIngredientRow();
+  </script>
+</body>
+</html>
