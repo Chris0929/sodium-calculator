@@ -35,46 +35,32 @@
 <script>
 const apiKey = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
 
-async function analyzeRecipe() {
-  const input = document.getElementById('recipeInput').value.trim().split(/\n|,/);
-  const servings = parseFloat(document.getElementById('servings').value);
-  const loader = document.getElementById('loader');
-  const results = document.getElementById('results');
-  loader.style.display = 'block';
-  results.innerHTML = "";
-  document.getElementById('macroChart').style.display = 'none';
+async function getNutrientData(ingredientLine) {
+  // Remove quantities and units to isolate ingredient name
+  // Basic pattern: remove leading numbers, fractions, and common units
+  let cleaned = ingredientLine.toLowerCase();
+  cleaned = cleaned.replace(/^\s*[\d\/\.\s-]+/, ''); // remove leading numbers/fractions
+  cleaned = cleaned.replace(/\b(tsp|tbsp|tablespoon|teaspoon|cup|grams|g|kg|ml|l|ounce|oz|pound|lb)s?\b/g, '');
+  cleaned = cleaned.replace(/[,\.\(\)]/g, ''); // remove commas, dots, parentheses
+  cleaned = cleaned.trim();
 
-  let totalNutrients = {};
+  if (cleaned.length === 0) return null;
 
-  for (let line of input) {
-    const query = line.trim();
-    if (!query) continue;
+  const encodedQuery = encodeURIComponent(cleaned);
+  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodedQuery}&pageSize=1&api_key=${API_KEY}`;
 
-    const encoded = encodeURIComponent(query);
-    const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encoded}&pageSize=1&api_key=${apiKey}`;
-    const searchRes = await fetch(searchUrl).then(r => r.json());
-    const food = searchRes.foods?.[0];
-    if (!food) continue;
+  const response = await fetch(url);
+  if (!response.ok) return null;
 
-    const foodId = food.fdcId;
-    const detailsUrl = `https://api.nal.usda.gov/fdc/v1/food/${foodId}?api_key=${apiKey}`;
-    const details = await fetch(detailsUrl).then(r => r.json());
+  const data = await response.json();
 
-    details.foodNutrients.forEach(n => {
-      if (!n.nutrientName || isNaN(n.value)) return;
-      const name = n.nutrientName;
-      if (!totalNutrients[name]) {
-        totalNutrients[name] = { unit: n.unitName, value: 0 };
-      }
-      totalNutrients[name].value += n.value;
-    });
+  if (!data.foods || data.foods.length === 0) {
+    console.log(`No results for query: "${cleaned}"`);
+    return null;
   }
 
-  loader.style.display = 'none';
-  if (!Object.keys(totalNutrients).length) {
-    results.innerHTML = "<p>No nutrient data found. Please refine your recipe.</p>";
-    return;
-  }
+  return data.foods[0];
+}
 
   let html = "<h3>Nutrition Facts (per total recipe)</h3>";
   html += "<table class='nutrient-table'><tr><th>Nutrient</th><th>Amount</th></tr>";
