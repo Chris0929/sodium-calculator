@@ -1,117 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Sodium Calculator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nutrition & Sodium Calculator</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    textarea { width: 100%; height: 150px; }
-    input[type='number'] { width: 60px; }
-    label { display: block; margin: 8px 0; }
-    #ingredientList { margin-top: 20px; }
-    h3 { margin-top: 20px; color: #007700; }
+    textarea, input { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
+    button { padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+    .nutrient-table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    .nutrient-table th, .nutrient-table td { border: 1px solid #ddd; padding: 8px; }
+    .nutrient-table th { background-color: #f2f2f2; }
+    .loader { margin-top: 20px; font-weight: bold; color: #007BFF; }
+    canvas { max-width: 100%; margin-top: 30px; }
   </style>
 </head>
 <body>
-  <h1>Global Sodium Calculator</h1>
-  <p>Paste your recipe below. We will analyze it and suggest lower-sodium alternatives when possible.</p>
 
-  <textarea id="recipeInput" placeholder="Paste your recipe..."></textarea>
-  <button onclick="parseRecipe()">Analyze Recipe</button>
+<h2>Nutrition & Sodium Calculator</h2>
+<p>Paste your recipe below (e.g., "2 cups flour, 1 tsp salt, 1 tbsp olive oil"):</p>
 
-  <div id="ingredientList"></div>
-  <div id="totalSodium"></div>
+<textarea id="recipeInput" rows="8" placeholder="Enter your ingredients line by line..."></textarea>
 
-  <script>
-    // Sample sodium database (expandable)
-    const sodiumDB = [
-      {
-        name: "salt",
-        unit: "tsp",
-        sodium: 2300,
-        lowSodiumAlt: { name: "lite salt", sodium: 1200 },
-        aliases: ["salt", "sea salt", "table salt"]
-      },
-      {
-        name: "soy sauce",
-        unit: "tbsp",
-        sodium: 900,
-        lowSodiumAlt: { name: "low-sodium soy sauce", sodium: 500 },
-        aliases: ["soy sauce", "soya sauce", "shoyu"]
-      },
-      {
-        name: "baking soda",
-        unit: "tsp",
-        sodium: 1250,
-        lowSodiumAlt: null,
-        aliases: ["baking soda"]
-      },
-      {
-        name: "feta cheese",
-        unit: "oz",
-        sodium: 316,
-        lowSodiumAlt: { name: "low-sodium feta", sodium: 140 },
-        aliases: ["feta", "feta cheese"]
-      },
-      {
-        name: "fish sauce",
-        unit: "tbsp",
-        sodium: 1410,
-        lowSodiumAlt: { name: "low-sodium fish sauce", sodium: 720 },
-        aliases: ["fish sauce"]
+<label>Number of Servings:</label>
+<input type="number" id="servings" value="1" min="1" />
+
+<button onclick="analyzeRecipe()">Analyze Recipe</button>
+
+<div class="loader" id="loader" style="display:none;">Analyzing... Please wait.</div>
+<div id="results"></div>
+<canvas id="macroChart"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const apiKey = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+
+async function analyzeRecipe() {
+  const input = document.getElementById('recipeInput').value.trim().split(/\n|,/);
+  const servings = parseFloat(document.getElementById('servings').value);
+  const loader = document.getElementById('loader');
+  const results = document.getElementById('results');
+  loader.style.display = 'block';
+  results.innerHTML = "";
+  document.getElementById('macroChart').style.display = 'none';
+
+  let totalNutrients = {};
+
+  for (let line of input) {
+    const query = line.trim();
+    if (!query) continue;
+
+    const encoded = encodeURIComponent(query);
+    const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encoded}&pageSize=1&api_key=${apiKey}`;
+    const searchRes = await fetch(searchUrl).then(r => r.json());
+    const food = searchRes.foods?.[0];
+    if (!food) continue;
+
+    const foodId = food.fdcId;
+    const detailsUrl = `https://api.nal.usda.gov/fdc/v1/food/${foodId}?api_key=${apiKey}`;
+    const details = await fetch(detailsUrl).then(r => r.json());
+
+    details.foodNutrients.forEach(n => {
+      if (!n.nutrientName || isNaN(n.value)) return;
+      const name = n.nutrientName;
+      if (!totalNutrients[name]) {
+        totalNutrients[name] = { unit: n.unitName, value: 0 };
       }
-    ];
+      totalNutrients[name].value += n.value;
+    });
+  }
 
-    function parseRecipe() {
-      const text = document.getElementById("recipeInput").value.toLowerCase();
-      const container = document.getElementById("ingredientList");
-      container.innerHTML = "";
+  loader.style.display = 'none';
+  if (!Object.keys(totalNutrients).length) {
+    results.innerHTML = "<p>No nutrient data found. Please refine your recipe.</p>";
+    return;
+  }
 
-      sodiumDB.forEach(item => {
-        const match = item.aliases.find(alias => text.includes(alias));
-        if (match) {
-          const entry = document.createElement("div");
-          entry.innerHTML = `
-            <label>${item.name} (${item.unit}): 
-              <input type="number" value="1" min="0" step="0.1" 
-                onchange="updateSodium()" 
-                data-sodium="${item.sodium}" 
-                data-alt="${item.lowSodiumAlt ? item.lowSodiumAlt.sodium : 0}" />
-            </label>
-            ${item.lowSodiumAlt ? `<label> 
-              <input type="checkbox" onchange="updateSodium()" data-altmode="true"> Use ${item.lowSodiumAlt.name}
-            </label>` : ''}
-          `;
-          container.appendChild(entry);
+  let html = "<h3>Nutrition Facts (per total recipe)</h3>";
+  html += "<table class='nutrient-table'><tr><th>Nutrient</th><th>Amount</th></tr>";
+  for (let nutrient in totalNutrients) {
+    const total = totalNutrients[nutrient];
+    const perServing = total.value / servings;
+    html += `<tr><td>${nutrient}</td><td>${perServing.toFixed(2)} ${total.unit}</td></tr>`;
+  }
+  html += "</table>";
+
+  const sodium = totalNutrients["Sodium, Na"]?.value || 0;
+  if (sodium / servings > 1500) {
+    html += "<p style='color:red; font-weight: bold;'>⚠️ High Sodium Detected. Consider low-sodium alternatives like unsalted butter or reduced-sodium broth.</p>";
+  }
+
+  results.innerHTML = html;
+
+  // Draw Macro Chart
+  const macros = ["Protein", "Total lipid (fat)", "Carbohydrate, by difference"];
+  const values = macros.map(m => totalNutrients[m]?.value / servings || 0);
+  const ctx = document.getElementById('macroChart').getContext('2d');
+  document.getElementById('macroChart').style.display = 'block';
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: macros,
+      datasets: [{
+        data: values,
+        backgroundColor: ['#4caf50', '#2196f3', '#ff9800']
+      }]
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: 'Macronutrient Distribution (per serving)'
         }
-      });
-
-      updateSodium();
+      }
     }
+  });
 
-    function updateSodium() {
-      const inputs = document.querySelectorAll("input[type=number]");
-      const checks = document.querySelectorAll("input[type=checkbox][data-altmode]");
-      let total = 0;
+  // Save recipe to localStorage
+  const history = JSON.parse(localStorage.getItem("recipeHistory") || "[]");
+  history.unshift({ text: input.join(', '), timestamp: Date.now() });
+  localStorage.setItem("recipeHistory", JSON.stringify(history.slice(0, 5)));
+}
+</script>
 
-      inputs.forEach((input, i) => {
-        let qty = parseFloat(input.value) || 0;
-        let sodium = parseFloat(input.dataset.sodium);
-        let alt = parseFloat(input.dataset.alt);
-        const checkbox = checks[i];
-
-        if (checkbox && checkbox.checked && alt) {
-          total += qty * alt;
-        } else {
-          total += qty * sodium;
-        }
-      });
-
-      document.getElementById("totalSodium").innerHTML = `
-        <h3>Total Estimated Sodium: ${Math.round(total)} mg</h3>
-      `;
-    }
-  </script>
 </body>
 </html>
