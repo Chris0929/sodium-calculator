@@ -262,3 +262,41 @@
       }
 
       const scaleFactor = weight
+  totalNutrients.calories += getNutrientValue(foodData, 'Energy') * scaleFactor;
+  totalNutrients.sodium += getNutrientValue(foodData, 'Sodium, Na') * scaleFactor;
+  totalNutrients.protein += getNutrientValue(foodData, 'Protein') * scaleFactor;
+  totalNutrients.fat += getNutrientValue(foodData, 'Total lipid (fat)') * scaleFactor;
+  totalNutrients.carbs += getNutrientValue(foodData, 'Carbohydrate, by difference') * scaleFactor;
+  totalNutrients.potassium += getNutrientValue(foodData, 'Potassium, K') * scaleFactor;
+  totalNutrients.sugar += getNutrientValue(foodData, 'Sugars, total including NLEA') * scaleFactor;
+  totalNutrients.phosphorus += getNutrientValue(foodData, 'Phosphorus, P') * scaleFactor;
+  totalNutrients.iron += getNutrientValue(foodData, 'Iron, Fe') * scaleFactor;
+}
+
+const nutrientsPerServing = {};
+for (let key in totalNutrients) {
+  nutrientsPerServing[key] = (totalNutrients[key] / servings).toFixed(2);
+}
+
+resultsDiv.innerHTML = `
+  <h2>Nutrition per Serving</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nutrient</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Calories</td><td>${nutrientsPerServing.calories} kcal</td></tr>
+      <tr><td>Sodium</td><td>${nutrientsPerServing.sodium} mg</td></tr>
+      <tr><td>Protein</td><td>${nutrientsPerServing.protein} g</td></tr>
+      <tr><td>Fat</td><td>${nutrientsPerServing.fat} g</td></tr>
+      <tr><td>Carbohydrates</td><td>${nutrientsPerServing.carbs} g</td></tr>
+      <tr><td>Sugar</td><td>${nutrientsPerServing.sugar} g</td></tr>
+      <tr><td>Potassium</td><td>${nutrientsPerServing.potassium} mg</td></tr>
+      <tr><td>Phosphorus</td><td>${nutrientsPerServing.phosphorus} mg</td></tr>
+      <tr><td>Iron</td><td>${nutrientsPerServing.iron} mg</td></tr>
+    </tbody>
+  </table>
+`;
