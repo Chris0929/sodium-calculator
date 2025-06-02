@@ -1,302 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Recipe Nutrient Analyzer</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 650px;
-    margin: 40px auto;
-    padding: 25px 30px;
-    background: #fff8f0; /* creamy warm background */
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(255, 180, 150, 0.3);
-    color: #5a3e36;
-  }
-  h1 {
-    text-align: center;
-    color: #d66a42; /* warm terracotta */
-    margin-bottom: 25px;
-    font-weight: 700;
-  }
-  textarea {
-    width: 100%;
-    height: 160px;
-    font-size: 1.1rem;
-    padding: 12px 15px;
-    border-radius: 10px;
-    border: 2px solid #f3b99c;
-    box-sizing: border-box;
-    background: #fff0e6;
-    color: #5a3e36;
-    resize: vertical;
-    transition: border-color 0.3s ease;
-  }
-  textarea:focus {
-    border-color: #d66a42;
-    outline: none;
-    background: #fff6f1;
-  }
-  label {
-    display: block;
-    margin-top: 20px;
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #b45a33;
-  }
-  input[type=number] {
-    width: 110px;
-    padding: 9px 12px;
-    font-size: 1.1rem;
-    margin-top: 8px;
-    border-radius: 10px;
-    border: 2px solid #f3b99c;
-    background: #fff0e6;
-    color: #5a3e36;
-    transition: border-color 0.3s ease;
-  }
-  input[type=number]:focus {
-    border-color: #d66a42;
-    outline: none;
-    background: #fff6f1;
-  }
-  button {
-    background-color: #d66a42;
-    color: #fff8f0;
-    border: none;
-    cursor: pointer;
-    padding: 14px 25px;
-    font-weight: 700;
-    border-radius: 12px;
-    margin-top: 30px;
-    font-size: 1.2rem;
-    width: 100%;
-    box-shadow: 0 6px 15px rgba(214, 106, 66, 0.4);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  button:hover {
-    background-color: #bf5b2f;
-    box-shadow: 0 8px 20px rgba(191, 91, 47, 0.6);
-  }
-  #results {
-    margin-top: 35px;
-  }
-  .ingredient-result {
-    background: #fff0e6;
-    margin-bottom: 18px;
-    padding: 18px 20px;
-    border-radius: 12px;
-    box-shadow: 0 0 12px rgba(214, 106, 66, 0.15);
-  }
-  .ingredient-result strong {
-    color: #b45a33;
-  }
-  .error {
-    color: #c94e4e;
-    font-weight: 700;
-    margin-bottom: 12px;
-    font-size: 1.05rem;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 12px;
-    font-size: 1rem;
-  }
-  th, td {
-    padding: 8px 14px;
-    border: 1px solid #f3b99c;
-    text-align: right;
-    color: #5a3e36;
-  }
-  th {
-    background-color: #ffd9c3;
-    font-weight: 700;
-  }
-  h2 {
-    color: #b45a33;
-    margin-bottom: 15px;
-    font-weight: 700;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nutrition Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #fff8f0;
+      color: #333;
+    }
+    label, textarea, input {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    textarea {
+      width: 100%;
+      padding: 0.5rem;
+      font-family: monospace;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background-color: #ffeedd;
+    }
+    button {
+      background-color: #ffb347;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff9933;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Recipe Nutrient Analyzer</h1>
+<h1>Nutrition Calculator</h1>
 
-<label for="recipeInput">Enter your recipe ingredients (one per line):</label>
-<textarea id="recipeInput" placeholder="e.g.
-1 cup cooked rice
-2 tbsp soy sauce
-100 g chicken breast
-"></textarea>
+<label for="ingredients">Enter Ingredients (one per line as grams + tab + food name):</label>
+<textarea id="ingredients" rows="10">100	Chicken breast, cooked
+200	White rice, cooked
+50	Broccoli, raw</textarea>
 
-<label for="servingsInput">Number of servings:</label>
-<input type="number" id="servingsInput" value="1" min="1" />
+<label for="servings">Number of Servings:</label>
+<input type="number" id="servings" value="2" min="1"/>
 
-<button id="analyzeBtn">Analyze Nutrients</button>
+<button id="calculate">Calculate</button>
 
 <div id="results"></div>
 
 <script>
-  const API_KEY = 'TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ';
+const apiKey = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+const nutrientKeys = {
+  208: "calories",
+  203: "protein",
+  204: "fat",
+  205: "carbs",
+  269: "sugar",
+  307: "sodium",
+  306: "potassium",
+  305: "phosphorus",
+  303: "iron",
+  301: "calcium",
+  304: "magnesium"
+};
 
-  const unitToGrams = {
-    g: 1,
-    gram: 1,
-    grams: 1,
-    kg: 1000,
-    kilogram: 1000,
-    kilograms: 1000,
-    ml: 1,
-    l: 1000,
-    litre: 1000,
-    litres: 1000,
-    tsp: 4.2,
-    tbsp: 14.3,
-    cup: 240
-  };
-
-  function parseIngredientLine(line) {
-    const regex = /^\s*(\d+(?:\/\d+)?(?:\.\d+)?|\d*\.\d+)?\s*(\w+)?\s*(.*)$/i;
-    const match = line.match(regex);
-    if (!match) return null;
-
-    let quantity = match[1];
-    let unit = match[2];
-    let ingredient = match[3];
-
-    if (!quantity) quantity = 1;
-    else if (quantity.includes('/')) {
-      const parts = quantity.split('/');
-      quantity = parseFloat(parts[0]) / parseFloat(parts[1]);
-    } else {
-      quantity = parseFloat(quantity);
-    }
-
-    if (unit && !unitToGrams[unit.toLowerCase()]) {
-      ingredient = unit + ' ' + ingredient;
-      unit = null;
-    }
-
-    ingredient = ingredient.trim();
-
-    return { quantity, unit: unit ? unit.toLowerCase() : null, ingredient };
-  }
-
-  async function fetchFoodData(query) {
-    const encoded = encodeURIComponent(query);
-    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encoded}&pageSize=1&api_key=${API_KEY}`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.foods && data.foods.length > 0) {
-        return data.foods[0];
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  function getNutrientValue(food, nutrientName) {
-    if (!food || !food.foodNutrients) return 0;
-    const nutrient = food.foodNutrients.find(n => n.nutrientName.toLowerCase() === nutrientName.toLowerCase());
-    return nutrient ? nutrient.value : 0;
-  }
-
-  document.getElementById('analyzeBtn').addEventListener('click', async () => {
-    const input = document.getElementById('recipeInput').value.trim();
-    const servings = parseFloat(document.getElementById('servingsInput').value) || 1;
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = '';
-
-    if (!input) {
-      resultsDiv.innerHTML = '<p class="error">Please enter your recipe ingredients.</p>';
-      return;
-    }
-
-    const lines = input.split('\n').filter(line => line.trim() !== '');
-    if (lines.length === 0) {
-      resultsDiv.innerHTML = '<p class="error">Please enter at least one ingredient line.</p>';
-      return;
-    }
-
-    let totalNutrients = {
-      calories: 0,
-      sodium: 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      potassium: 0,
-      sugar: 0,
-      phosphorus: 0,
-      iron: 0
+function parseIngredients(input) {
+  return input.split("\n").map(line => {
+    const [gramsStr, ...foodArr] = line.trim().split("\t");
+    return {
+      grams: parseFloat(gramsStr),
+      food: foodArr.join(" ").trim()
     };
-
-    for (const line of lines) {
-      const parsed = parseIngredientLine(line);
-      if (!parsed || !parsed.ingredient) {
-        const errorEl = document.createElement('p');
-        errorEl.className = 'error';
-        errorEl.textContent = `Could not parse ingredient line: "${line}"`;
-        resultsDiv.appendChild(errorEl);
-        continue;
-      }
-
-      const foodData = await fetchFoodData(parsed.ingredient);
-      if (!foodData) {
-        const errorEl = document.createElement('p');
-        errorEl.className = 'error';
-        errorEl.textContent = `No nutrient data found for: "${parsed.ingredient}". Please try refining the ingredient name.`;
-        resultsDiv.appendChild(errorEl);
-        continue;
-      }
-
-      let weightGrams = parsed.quantity;
-      if (parsed.unit) {
-        weightGrams = parsed.quantity * (unitToGrams[parsed.unit] || 1);
-      }
-
-      const scaleFactor = weight
-  totalNutrients.calories += getNutrientValue(foodData, 'Energy') * scaleFactor;
-  totalNutrients.sodium += getNutrientValue(foodData, 'Sodium, Na') * scaleFactor;
-  totalNutrients.protein += getNutrientValue(foodData, 'Protein') * scaleFactor;
-  totalNutrients.fat += getNutrientValue(foodData, 'Total lipid (fat)') * scaleFactor;
-  totalNutrients.carbs += getNutrientValue(foodData, 'Carbohydrate, by difference') * scaleFactor;
-  totalNutrients.potassium += getNutrientValue(foodData, 'Potassium, K') * scaleFactor;
-  totalNutrients.sugar += getNutrientValue(foodData, 'Sugars, total including NLEA') * scaleFactor;
-  totalNutrients.phosphorus += getNutrientValue(foodData, 'Phosphorus, P') * scaleFactor;
-  totalNutrients.iron += getNutrientValue(foodData, 'Iron, Fe') * scaleFactor;
+  }).filter(i => i.grams && i.food);
 }
 
-const nutrientsPerServing = {};
-for (let key in totalNutrients) {
-  nutrientsPerServing[key] = (totalNutrients[key] / servings).toFixed(2);
+async function fetchNutrientData(ingredient) {
+  const searchRes = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(ingredient.food)}&api_key=${apiKey}`);
+  const searchData = await searchRes.json();
+  const firstMatch = searchData.foods?.[0];
+  if (!firstMatch) return null;
+
+  const detailRes = await fetch(`https://api.nal.usda.gov/fdc/v1/food/${firstMatch.fdcId}?api_key=${apiKey}`);
+  const detailData = await detailRes.json();
+
+  const nutrientData = {};
+  detailData.foodNutrients.forEach(n => {
+    const key = nutrientKeys[n.nutrientNumber];
+    if (key) {
+      nutrientData[key] = n.amount;
+    }
+  });
+
+  return {
+    name: ingredient.food,
+    grams: ingredient.grams,
+    nutrients: nutrientData
+  };
 }
 
-resultsDiv.innerHTML = `
-  <h2>Nutrition per Serving</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Nutrient</th>
-        <th>Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>Calories</td><td>${nutrientsPerServing.calories} kcal</td></tr>
-      <tr><td>Sodium</td><td>${nutrientsPerServing.sodium} mg</td></tr>
-      <tr><td>Protein</td><td>${nutrientsPerServing.protein} g</td></tr>
-      <tr><td>Fat</td><td>${nutrientsPerServing.fat} g</td></tr>
-      <tr><td>Carbohydrates</td><td>${nutrientsPerServing.carbs} g</td></tr>
-      <tr><td>Sugar</td><td>${nutrientsPerServing.sugar} g</td></tr>
-      <tr><td>Potassium</td><td>${nutrientsPerServing.potassium} mg</td></tr>
-      <tr><td>Phosphorus</td><td>${nutrientsPerServing.phosphorus} mg</td></tr>
-      <tr><td>Iron</td><td>${nutrientsPerServing.iron} mg</td></tr>
-    </tbody>
-  </table>
-`;
+function scaleNutrients(nutrients, scale) {
+  const result = {};
+  for (const key in nutrientKeys) {
+    const k = nutrientKeys[key];
+    result[k] = (nutrients[k] || 0) * scale;
+  }
+  return result;
+}
+
+function sumNutrients(total, toAdd) {
+  for (const key in toAdd) {
+    total[key] = (total[key] || 0) + toAdd[key];
+  }
+  return total;
+}
+
+document.getElementById("calculate").addEventListener("click", async () => {
+  const ingredientsInput = document.getElementById("ingredients").value;
+  const servings = parseFloat(document.getElementById("servings").value);
+  const ingredients = parseIngredients(ingredientsInput);
+
+  const totalNutrients = {};
+  const promises = ingredients.map(async ing => {
+    const data = await fetchNutrientData(ing);
+    if (data) {
+      const scale = data.grams / 100;
+      const scaled = scaleNutrients(data.nutrients, scale);
+      sumNutrients(totalNutrients, scaled);
+    }
+  });
+
+  await Promise.all(promises);
+
+  const perServing = {};
+  for (const key in totalNutrients) {
+    perServing[key] = (totalNutrients[key] / servings).toFixed(2);
+  }
+
+  const results = `
+    <h2>Nutrition per Serving</h2>
+    <table>
+      <tr><th>Nutrient</th><th>Amount</th></tr>
+      <tr><td>Calories</td><td>${perServing.calories} kcal</td></tr>
+      <tr><td>Protein</td><td>${perServing.protein} g</td></tr>
+      <tr><td>Fat</td><td>${perServing.fat} g</td></tr>
+      <tr><td>Carbohydrates</td><td>${perServing.carbs} g</td></tr>
+      <tr><td>Sugar</td><td>${perServing.sugar} g</td></tr>
+      <tr><td>Sodium</td><td>${perServing.sodium} mg</td></tr>
+      <tr><td>Potassium</td><td>${perServing.potassium} mg</td></tr>
+      <tr><td>Phosphorus</td><td>${perServing.phosphorus} mg</td></tr>
+      <tr><td>Iron</td><td>${perServing.iron} mg</td></tr>
+      <tr><td>Calcium</td><td>${perServing.calcium} mg</td></tr>
+      <tr><td>Magnesium</td><td>${perServing.magnesium} mg</td></tr>
+    </table>
+  `;
+
+  document.getElementById("results").innerHTML = results;
+});
+</script>
+
+</body>
+</html>
