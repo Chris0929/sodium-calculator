@@ -2,150 +2,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Recipe Nutrient Analyzer</title>
+  <title>CKD Nutrient Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 25px 30px;
-      background: #fff8f0;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 180, 150, 0.3);
-      color: #5a3e36;
+      font-family: Arial, sans-serif;
+      background: #fff9f3;
+      color: #333;
+      padding: 30px;
     }
+
+    .container {
+      max-width: 650px;
+      margin: auto;
+      background: #fef5e7;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(200, 150, 100, 0.1);
+    }
+
     h1 {
       text-align: center;
-      color: #d66a42;
-      margin-bottom: 25px;
-      font-weight: 700;
+      color: #cc6600;
     }
-    textarea, input[type=number] {
-      width: 100%;
-      font-size: 1.1rem;
-      padding: 12px 15px;
-      border-radius: 10px;
-      border: 2px solid #f3b99c;
-      background: #fff0e6;
-      color: #5a3e36;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease;
-    }
+
     textarea {
-      height: 160px;
-      resize: vertical;
+      width: 100%;
+      height: 60px;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
     }
-    textarea:focus, input[type=number]:focus {
-      border-color: #d66a42;
-      outline: none;
-      background: #fff6f1;
-    }
-    label {
-      display: block;
-      margin-top: 20px;
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #b45a33;
-    }
+
     button {
-      background-color: #d66a42;
-      color: #fff8f0;
+      margin-top: 10px;
+      background: #ffcc99;
       border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 6px;
       cursor: pointer;
-      padding: 14px 25px;
-      font-weight: 700;
-      border-radius: 12px;
-      margin-top: 30px;
-      font-size: 1.2rem;
       width: 100%;
-      box-shadow: 0 6px 15px rgba(214, 106, 66, 0.4);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
+
     button:hover {
-      background-color: #bf5b2f;
-      box-shadow: 0 8px 20px rgba(191, 91, 47, 0.6);
+      background: #ffb84d;
     }
+
     #results {
-      margin-top: 35px;
+      margin-top: 20px;
+      background: #fff1df;
+      padding: 15px;
+      border-radius: 8px;
     }
-    .ingredient-result, .totals {
-      background: #fff0e6;
-      margin-bottom: 18px;
-      padding: 18px 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(214, 106, 66, 0.15);
+
+    .guidelines {
+      margin-top: 30px;
+      background: #fffbe6;
+      padding: 20px;
+      border-left: 4px solid #ffcc80;
+      border-radius: 8px;
+      font-size: 14px;
     }
-    .ingredient-result strong, .totals strong {
-      color: #b45a33;
-    }
+
     .error {
-      color: #c94e4e;
-      font-weight: 700;
-      margin-bottom: 12px;
-      font-size: 1.05rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 1rem;
-    }
-    th, td {
-      padding: 8px 14px;
-      border: 1px solid #f3b99c;
-      text-align: right;
-      color: #5a3e36;
-    }
-    th {
-      background-color: #ffd9c3;
-      font-weight: 700;
-    }
-    td:first-child, th:first-child {
-      text-align: left;
+      color: red;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>CKD Nutrient Checker</h1>
+    <textarea id="input" placeholder="e.g., Ranch dressing, 1 tbsp"></textarea>
+    <button onclick="searchFood()">Check Nutrients</button>
+    <div id="results"></div>
+    <div class="guidelines">
+      <h2>CKD Stage 3 Nutrient Guidelines</h2>
+      <p>
+        🔹 Sodium: ≤ 2,000 mg/day<br>
+        🔹 Protein: 47–51g/day (0.55–0.6g/kg)<br>
+        🔹 Potassium: 2–4g/day (51–102 mmol)<br>
+        🔹 Phosphorus: 800–1,000 mg/day
+      </p>
+      <p>⚠️ Always consult a doctor or registered dietitian.</p>
+    </div>
+  </div>
 
-<h1>Recipe Nutrient Analyzer</h1>
+  <script>
+    async function searchFood() {
+      const query = document.getElementById('input').value;
+      const results = document.getElementById('results');
+      const [item] = query.split(',').map(x => x.trim());
+      const API_KEY = "d9b6cec3eb561db6f920a0797ba49f3e";
 
-<label for="recipeInput">Enter your recipe ingredients (one per line):</label>
-<textarea id="recipeInput" placeholder="e.g.
-1 cup cooked rice
-2 tbsp soy sauce
-100 g chicken breast
-"></textarea>
+      results.innerHTML = "Loading...";
 
-<label for="servingsInput">Number of servings:</label>
-<input type="number" id="servingsInput" value="1" min="1" />
+      try {
+        const searchRes = await fetch("https://foodb.ca/api/v1/foodreport/food", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ food_name: item, api_key: API_KEY, page: 1 })
+        });
 
-<button id="analyzeBtn">Analyze Nutrients</button>
+        const foodData = await searchRes.json();
+        const food = foodData.value?.[0];
+        if (!food) {
+          results.innerHTML = `<p class="error">Food not found</p>`;
+          return;
+        }
 
-<div id="results"></div>
+        const contentRes = await fetch("https://foodb.ca/api/v1/foodreport/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ food_id: food.food_id, api_key: API_KEY, page: 1 })
+        });
 
-<script type="module">
-  import { analyzeRecipe } from './utils/analyzer.js';
+        const contentData = await contentRes.json();
+        const nutrients = contentData.value || [];
 
-  const recipeInput = document.getElementById('recipeInput');
-  const servingsInput = document.getElementById('servingsInput');
-  const resultsDiv = document.getElementById('results');
+        const get = (name) =>
+          nutrients.find(n => n.compound_name.toLowerCase() === name.toLowerCase())?.content || 0;
 
-  document.getElementById('analyzeBtn').addEventListener('click', async () => {
-    const ingredients = recipeInput.value.trim();
-    const servings = parseFloat(servingsInput.value);
-
-    resultsDiv.innerHTML = '';
-
-    if (!ingredients) {
-      resultsDiv.innerHTML = '<p class="error">Please enter your recipe ingredients.</p>';
-      return;
+        results.innerHTML = `
+          <h3>Results for: ${food.food_name}</h3>
+          <p>Sodium: ${get("Sodium")} mg</p>
+          <p>Potassium: ${get("Potassium")} mg</p>
+          <p>Phosphorus: ${get("Phosphorus")} mg</p>
+          <p>Protein: ${get("Protein")} g</p>
+        `;
+      } catch (err) {
+        console.error(err);
+        results.innerHTML = `<p class="error">Error fetching data. Please try again later.</p>`;
+      }
     }
-
-    const analysisHTML = await analyzeRecipe(ingredients, servings);
-    resultsDiv.innerHTML = analysisHTML;
-  });
-</script>
-
+  </script>
 </body>
 </html>
