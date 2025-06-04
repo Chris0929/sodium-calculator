@@ -1,135 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CKD Nutrient Analyzer</title>
   <style>
     body {
+      background: #fef6f0;
       font-family: Arial, sans-serif;
-      background: #f9f3f0;
       color: #333;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2em;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
     }
     h1 {
-      color: #b9848c;
+      text-align: center;
+      color: #a0522d;
     }
     textarea {
       width: 100%;
       height: 120px;
-      padding: 1em;
+      padding: 10px;
+      font-size: 16px;
       border: 1px solid #ccc;
       border-radius: 8px;
-      margin-bottom: 1em;
+      background: #fffaf5;
     }
     button {
-      background-color: #ffd1dc;
-      color: #333;
+      display: block;
+      margin: 20px auto;
       padding: 10px 20px;
+      font-size: 16px;
       border: none;
       border-radius: 8px;
+      background-color: #ffa07a;
+      color: white;
       cursor: pointer;
-      font-weight: bold;
     }
-    .results {
-      margin-top: 2em;
-      padding: 1em;
-      background: #fffaf5;
+    .result {
+      margin-top: 20px;
+      padding: 15px;
       border-radius: 8px;
-      box-shadow: 0 0 10px #eee;
+      background-color: #fff5ec;
+      border: 1px solid #e0cfc3;
     }
     .alert {
-      color: red;
+      color: #d9534f;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>CKD Nutrient Analyzer</h1>
-  <p><strong>Stage 3 CKD Guidelines:</strong><br>
-  Sodium: ~2000mg/day<br>
-  Protein: 47–51g/day<br>
-  Calories: 2116–2962/day<br>
-  Potassium: 2000–4000mg/day<br>
-  Phosphorus: 800–1000mg/day</p>
 
-  <p>Enter food and amount (e.g., <em>"1 cup spinach, 2 tbsp peanut butter"</em>):</p>
-  <textarea id="foodInput" placeholder="e.g., 1 cup spinach, 2 tbsp peanut butter"></textarea>
-  <button onclick="analyzeFood()">Analyze</button>
+  <p>
+    For someone with CKD stage 3, recommended daily limits:<br>
+    - Sodium: ~2000 mg<br>
+    - Potassium: 2000–4000 mg<br>
+    - Protein: 47–51 g<br>
+    - Phosphorus: 800–1000 mg
+  </p>
 
-  <div id="results" class="results"></div>
+  <textarea id="input" placeholder="e.g. 1 tsp salt, 2 tbsp ketchup"></textarea>
+  <button onclick="analyze()">Analyze</button>
+
+  <div class="result" id="result"></div>
 
   <script>
-    const API_KEY = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+    const nutrientDB = {
+      "salt": { per: "tsp", weight: 6, sodium: 2325, potassium: 0, protein: 0, phosphorus: 0 },
+      "ketchup": { per: "tbsp", weight: 15, sodium: 160, potassium: 80, protein: 0.2, phosphorus: 3 },
+      "soy sauce": { per: "tbsp", weight: 15, sodium: 879, potassium: 55, protein: 1.0, phosphorus: 20 },
+      "ranch dressing": { per: "tbsp", weight: 15, sodium: 150, potassium: 20, protein: 0.3, phosphorus: 15 },
+      "peanut butter": { per: "tbsp", weight: 16, sodium: 76, potassium: 208, protein: 3.6, phosphorus: 50 },
+      // More items to be added here up to 150
+    };
 
-    async function analyzeFood() {
-      const input = document.getElementById("foodInput").value;
-      const foodList = input.split(",");
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "<p>Analyzing...</p>";
+    const unitToGrams = {
+      "tsp": 4.93,
+      "tbsp": 14.79,
+      "cup": 240,
+      "oz": 28.35,
+      "g": 1,
+      "ml": 1
+    };
 
-      let total = {
-        sodium: 0,
-        potassium: 0,
-        protein: 0,
-        phosphorus: 0
-      };
+    function analyze() {
+      const input = document.getElementById("input").value.trim().toLowerCase();
+      const lines = input.split(/[,\n]+/);
+      let totals = { sodium: 0, potassium: 0, protein: 0, phosphorus: 0 };
+      let output = "";
 
-      for (const itemRaw of foodList) {
-        const item = itemRaw.trim();
-        if (!item) continue;
-
-        const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${API_KEY}&query=${encodeURIComponent(item)}&dataType=Foundation,SR%20Legacy&pageSize=1`;
-        const searchResponse = await fetch(searchUrl);
-        const searchData = await searchResponse.json();
-
-        if (!searchData.foods || searchData.foods.length === 0) continue;
-
-        const food = searchData.foods[0];
-        const foodId = food.fdcId;
-
-        const detailUrl = `https://api.nal.usda.gov/fdc/v1/food/${foodId}?api_key=${API_KEY}`;
-        const detailResponse = await fetch(detailUrl);
-        const detailData = await detailResponse.json();
-
-        let multiplier = 1;
-        const match = item.match(/(\d+(\.\d+)?)\s?(cup|tbsp|tsp|g|oz|ml)/i);
+      for (let line of lines) {
+        const match = line.trim().match(/(\d+(\.\d+)?)\s*(tsp|tbsp|cup|oz|g|ml)?\s*(.+)/);
         if (match) {
           const qty = parseFloat(match[1]);
-          const unit = match[3].toLowerCase();
+          const unit = match[3] || "g";
+          const item = match[4].trim();
+          const data = nutrientDB[item];
 
-          const unitToGram = {
-            g: 1,
-            oz: 28.35,
-            ml: 1,
-            tsp: 4.2,
-            tbsp: 14.3,
-            cup: 240
-          };
+          if (data) {
+            const baseWeight = data.weight; // grams in one serving
+            const inputWeight = unitToGrams[unit] * qty;
+            const ratio = inputWeight / baseWeight;
 
-          multiplier = (qty * (unitToGram[unit] || 100)) / 100; // Base 100g scaling
+            const sodium = data.sodium * ratio;
+            const potassium = data.potassium * ratio;
+            const protein = data.protein * ratio;
+            const phosphorus = data.phosphorus * ratio;
+
+            totals.sodium += sodium;
+            totals.potassium += potassium;
+            totals.protein += protein;
+            totals.phosphorus += phosphorus;
+
+            output += `<p><strong>${qty} ${unit} ${item}</strong>: Sodium ${sodium.toFixed(1)} mg, Potassium ${potassium.toFixed(1)} mg, Protein ${protein.toFixed(1)} g, Phosphorus ${phosphorus.toFixed(1)} mg</p>`;
+          } else {
+            output += `<p><strong>${item}</strong>: Not in database</p>`;
+          }
         }
-
-        detailData.foodNutrients.forEach(n => {
-          const name = n.nutrient.name.toLowerCase();
-          const amount = n.amount * multiplier;
-
-          if (name.includes("sodium")) total.sodium += amount;
-          if (name.includes("potassium")) total.potassium += amount;
-          if (name.includes("protein")) total.protein += amount;
-          if (name.includes("phosphorus")) total.phosphorus += amount;
-        });
       }
 
-      let output = `<h3>Total Nutrients:</h3>
-        <p>Sodium: ${total.sodium.toFixed(1)} mg ${total.sodium > 2000 ? '<span class="alert">(Limit exceeded!)</span>' : ''}</p>
-        <p>Potassium: ${total.potassium.toFixed(1)} mg ${total.potassium > 4000 ? '<span class="alert">(Limit exceeded!)</span>' : ''}</p>
-        <p>Protein: ${total.protein.toFixed(1)} g ${total.protein > 51 ? '<span class="alert">(Limit exceeded!)</span>' : ''}</p>
-        <p>Phosphorus: ${total.phosphorus.toFixed(1)} mg ${total.phosphorus > 1000 ? '<span class="alert">(Limit exceeded!)</span>' : ''}</p>`;
+      output += `<hr><p><strong>Total:</strong><br>Sodium: ${totals.sodium.toFixed(1)} mg<br>Potassium: ${totals.potassium.toFixed(1)} mg<br>Protein: ${totals.protein.toFixed(1)} g<br>Phosphorus: ${totals.phosphorus.toFixed(1)} mg</p>`;
 
-      resultsDiv.innerHTML = output;
+      if (totals.sodium > 2000 || totals.protein > 51 || totals.phosphorus > 1000 || totals.potassium > 4000) {
+        output += `<p class='alert'>⚠️ One or more nutrients exceed recommended CKD limits.</p>`;
+      }
+
+      document.getElementById("result").innerHTML = output;
     }
   </script>
 </body>
