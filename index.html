@@ -1,154 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>CKD Nutrient Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fff9f3;
-      color: #333;
-      padding: 30px;
-    }
-
-    .container {
-      max-width: 650px;
-      margin: auto;
-      background: #fef5e7;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(200, 150, 100, 0.1);
-    }
-
-    h1 {
-      text-align: center;
-      color: #cc6600;
-    }
-
-    textarea {
-      width: 100%;
-      height: 60px;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    button {
-      margin-top: 10px;
-      background: #ffcc99;
-      border: none;
-      padding: 10px 15px;
-      font-size: 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    button:hover {
-      background: #ffb84d;
-    }
-
-    #results {
-      margin-top: 20px;
-      background: #fff1df;
-      padding: 15px;
-      border-radius: 8px;
-      min-height: 80px;
-    }
-
-    .guidelines {
-      margin-top: 30px;
-      background: #fffbe6;
-      padding: 20px;
-      border-left: 4px solid #ffcc80;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .error {
-      color: red;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CKD Nutrient Analyzer</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f9f5f1;
+    color: #4a4a4a;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    color: #7f6f9f;
+  }
+  .container {
+    max-width: 700px;
+    margin: auto;
+    background: #fff7f2;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(127,111,159,0.2);
+  }
+  p {
+    line-height: 1.6;
+    margin-bottom: 1em;
+  }
+  label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+    margin-top: 20px;
+    color: #8f7aaf;
+  }
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px;
+    border: 2px solid #d1c4e9;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+  }
+  button {
+    margin-top: 15px;
+    background-color: #b49fcc;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #987dbb;
+  }
+  .results {
+    margin-top: 25px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #d1c4e9;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  th {
+    background-color: #b49fcc;
+    color: white;
+  }
+  .loading {
+    font-style: italic;
+    color: #7f6f9f;
+    margin-top: 15px;
+  }
+  .error {
+    color: #d9534f;
+    margin-top: 15px;
+    font-weight: 700;
+  }
+  .note {
+    background-color: #ede7f6;
+    padding: 15px 20px;
+    border-radius: 10px;
+    color: #5e548e;
+    font-size: 14px;
+    margin-bottom: 25px;
+  }
+</style>
 </head>
 <body>
   <div class="container">
-    <h1>CKD Nutrient Checker</h1>
-    <textarea id="input" placeholder="e.g., Ranch dressing, 1 tbsp"></textarea>
-    <button onclick="searchFood()">Check Nutrients</button>
-    <div id="results"></div>
-    <div class="guidelines">
-      <h2>CKD Stage 3 Nutrient Guidelines</h2>
-      <p>
-        🔹 Sodium: ≤ 2,000 mg/day<br>
-        🔹 Protein: 47–51g/day (0.55–0.6g/kg)<br>
-        🔹 Potassium: 2–4g/day (51–102 mmol)<br>
-        🔹 Phosphorus: 800–1,000 mg/day
-      </p>
-      <p>⚠️ Always consult a doctor or registered dietitian.</p>
+    <h1>CKD Nutrient Analyzer</h1>
+
+    <div class="note">
+      <p>For someone with CKD stage 3, the recommended daily sodium limit is generally around <strong>2,000 milligrams (mg)</strong> per day; however, it's crucial to consult with your doctor or a registered dietitian to determine the most appropriate sodium intake based on your individual needs and kidney function.</p>
+      <p>For people with CKD who do not have diabetes following a low protein diet based on the KDOQI Guidelines (<em>0.55 – 0.6g/kg/day</em>):</p>
+      <ul>
+        <li>47 – 51 grams of protein each day</li>
+        <li>2116 – 2962 calories per day</li>
+      </ul>
+      <p>For someone with kidney disease stage G3, the recommended potassium limit is typically between <strong>2-4 grams per day (51-102 mmol/day)</strong>, according to the National Kidney Foundation guidelines; this means a potassium restricted diet should be followed to manage potential hyperkalemia due to impaired kidney function at this stage.</p>
+      <p>For someone with Stage 3 Chronic Kidney Disease (CKD), the recommended phosphorus limit is typically between <strong>800mg and 1,000mg per day</strong>; this means limiting dietary intake of phosphorus to this range to manage potential buildup in the blood due to impaired kidney function.</p>
+    </div>
+
+    <label for="foods-input">Enter food items with quantities (use units like g, tbsp, tsp, oz, ml). One per line, e.g.:</label>
+    <textarea id="foods-input" placeholder="e.g. 100g chicken breast&#10;2 tbsp peanut butter"></textarea>
+    <button id="analyze-btn">Analyze Nutrients</button>
+
+    <div id="loading" class="loading" style="display:none;">Fetching nutrient data...</div>
+    <div id="error" class="error" style="display:none;"></div>
+
+    <div id="results" class="results" style="display:none;">
+      <h2>Nutrient Content Per Item</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Food Item</th>
+            <th>Protein (g)</th>
+            <th>Potassium (mg)</th>
+            <th>Sodium (mg)</th>
+            <th>Phosphorus (mg)</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
     </div>
   </div>
 
-  <script>
-    async function searchFood() {
-      const query = document.getElementById('input').value.trim();
-      const results = document.getElementById('results');
-      const API_KEY = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+<script>
+  const USDA_API_KEY = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+  const nutrientIds = {
+    protein_g: 1003,
+    potassium_mg: 1092,
+    sodium_mg: 1093,
+    phosphorus_mg: 1091,
+  };
 
-      if (!query) {
-        results.innerHTML = `<p class="error">Please enter a food name.</p>`;
-        return;
-      }
-
-      results.innerHTML = "Loading...";
-
-      try {
-        // Search food endpoint
-        const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=1&api_key=${API_KEY}`;
-        const searchRes = await fetch(searchUrl);
-        if (!searchRes.ok) {
-          throw new Error(`Search request failed: ${searchRes.status} ${searchRes.statusText}`);
-        }
-        const searchData = await searchRes.json();
-
-        if (!searchData.foods || searchData.foods.length === 0) {
-          results.innerHTML = `<p class="error">Food not found.</p>`;
-          return;
-        }
-
-        const food = searchData.foods[0];
-        const fdcId = food.fdcId;
-
-        // Fetch nutrient details
-        const detailsUrl = `https://api.nal.usda.gov/fdc/v1/food/${fdcId}?api_key=${API_KEY}`;
-        const detailsRes = await fetch(detailsUrl);
-        if (!detailsRes.ok) {
-          throw new Error(`Details request failed: ${detailsRes.status} ${detailsRes.statusText}`);
-        }
-        const detailsData = await detailsRes.json();
-
-        const nutrients = detailsData.foodNutrients || [];
-
-        // Helper to find nutrient amount by name
-        const getNutrientAmount = (name) => {
-          const nutrient = nutrients.find(n => n.nutrientName.toLowerCase() === name.toLowerCase());
-          return nutrient ? nutrient.value : "N/A";
-        };
-
-        results.innerHTML = `
-          <h3>Results for: ${food.description}</h3>
-          <p>Sodium: ${getNutrientAmount("Sodium")} mg</p>
-          <p>Potassium: ${getNutrientAmount("Potassium")} mg</p>
-          <p>Phosphorus: ${getNutrientAmount("Phosphorus")} mg</p>
-          <p>Protein: ${getNutrientAmount("Protein")} g</p>
-        `;
-      } catch (error) {
-        console.error(error);
-        results.innerHTML = `<p class="error">Error fetching data. Please try again later.</p>`;
-      }
+  async function fetchNutrients(foodQuery) {
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(foodQuery)}&pageSize=1`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`USDA API error: ${res.status}`);
     }
-  </script>
+    const data = await res.json();
+    if (!data.foods || data.foods.length === 0) {
+      throw new Error(`No results found for "${foodQuery}"`);
+    }
+    return data.foods[0].foodNutrients;
+  }
+
+  function extractNutrients(nutrients) {
+    let result = {
+      protein_g: 0,
+      potassium_mg: 0,
+      sodium_mg: 0,
+      phosphorus_mg: 0,
+    };
+    nutrients.forEach(n => {
+      for (const [key, id] of Object.entries(nutrientIds)) {
+        if (n.nutrientId === id) {
+          result[key] = n.value;
+        }
+      }
+    });
+    return result;
+  }
+
+  document.getElementById("analyze-btn").addEventListener("click", async () => {
+    const input = document.getElementById("foods-input").value.trim();
+    const errorDiv = document.getElementById("error");
+    const loadingDiv = document.getElementById("loading");
+    const resultsDiv = document.getElementById("results");
+    const resultsBody = document.getElementById("results-body");
+
+    errorDiv.style.display = "none";
+    resultsDiv.style.display = "none";
+    resultsBody.innerHTML = "";
+
+    if (!input) {
+      errorDiv.textContent = "Please enter at least one food item.";
+      errorDiv.style.display = "block";
+      return;
+    }
+
+    const foodItems = input.split("\n").filter(line => line.trim().length > 0);
+
+    loadingDiv.style.display = "block";
+
+    try {
+      for (const item of foodItems) {
+        const nutrientsRaw = await fetchNutrients(item);
+        const nutrients = extractNutrients(nutrientsRaw);
+
+        const tr = document.createElement("tr");
+
+        // Food name cell
+        const tdFood = document.createElement("td");
+        tdFood.textContent = item;
+        tr.appendChild(tdFood);
+
+        // Nutrient cells
+        const formatNumber = (num) => (num ? num.toFixed(2) : "0.00");
+
+        const tdProtein = document.createElement("td");
+        tdProtein.textContent = formatNumber(nutrients.protein_g);
+        tr.appendChild(tdProtein);
+
+        const tdPotassium = document.createElement("td");
+        tdPotassium.textContent = formatNumber(nutrients.potassium_mg);
+        tr.appendChild(tdPotassium);
+
+        const tdSodium = document.createElement("td");
+        tdSodium.textContent = formatNumber(nutrients.sodium_mg);
+        tr.appendChild(tdSodium);
+
+        const tdPhosphorus = document.createElement("td");
+        tdPhosphorus.textContent = formatNumber(nutrients.phosphorus_mg);
+        tr.appendChild(tdPhosphorus);
+
+        resultsBody.appendChild(tr);
+      }
+      resultsDiv.style.display = "block";
+    } catch (err) {
+      errorDiv.textContent = err.message;
+      errorDiv.style.display = "block";
+    } finally {
+      loadingDiv.style.display = "none";
+    }
+  });
+</script>
+
 </body>
 </html>
