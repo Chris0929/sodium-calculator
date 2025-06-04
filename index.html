@@ -56,6 +56,7 @@
       background: #fff1df;
       padding: 15px;
       border-radius: 8px;
+      min-height: 80px;
     }
 
     .guidelines {
@@ -92,48 +93,59 @@
 
   <script>
     async function searchFood() {
-      const query = document.getElementById('input').value;
+      const query = document.getElementById('input').value.trim();
       const results = document.getElementById('results');
-      const [item] = query.split(',').map(x => x.trim());
       const API_KEY = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+
+      if (!query) {
+        results.innerHTML = `<p class="error">Please enter a food name.</p>`;
+        return;
+      }
 
       results.innerHTML = "Loading...";
 
       try {
-        const searchRes = await fetch("https://foodb.ca/api/v1/foodreport/food", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ food_name: item, api_key: API_KEY, page: 1 })
-        });
+        // Search food endpoint
+        const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=1&api_key=${API_KEY}`;
+        const searchRes = await fetch(searchUrl);
+        if (!searchRes.ok) {
+          throw new Error(`Search request failed: ${searchRes.status} ${searchRes.statusText}`);
+        }
+        const searchData = await searchRes.json();
 
-        const foodData = await searchRes.json();
-        const food = foodData.value?.[0];
-        if (!food) {
-          results.innerHTML = `<p class="error">Food not found</p>`;
+        if (!searchData.foods || searchData.foods.length === 0) {
+          results.innerHTML = `<p class="error">Food not found.</p>`;
           return;
         }
 
-        const contentRes = await fetch("https://foodb.ca/api/v1/foodreport/content", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ food_id: food.food_id, api_key: API_KEY, page: 1 })
-        });
+        const food = searchData.foods[0];
+        const fdcId = food.fdcId;
 
-        const contentData = await contentRes.json();
-        const nutrients = contentData.value || [];
+        // Fetch nutrient details
+        const detailsUrl = `https://api.nal.usda.gov/fdc/v1/food/${fdcId}?api_key=${API_KEY}`;
+        const detailsRes = await fetch(detailsUrl);
+        if (!detailsRes.ok) {
+          throw new Error(`Details request failed: ${detailsRes.status} ${detailsRes.statusText}`);
+        }
+        const detailsData = await detailsRes.json();
 
-        const get = (name) =>
-          nutrients.find(n => n.compound_name.toLowerCase() === name.toLowerCase())?.content || 0;
+        const nutrients = detailsData.foodNutrients || [];
+
+        // Helper to find nutrient amount by name
+        const getNutrientAmount = (name) => {
+          const nutrient = nutrients.find(n => n.nutrientName.toLowerCase() === name.toLowerCase());
+          return nutrient ? nutrient.value : "N/A";
+        };
 
         results.innerHTML = `
-          <h3>Results for: ${food.food_name}</h3>
-          <p>Sodium: ${get("Sodium")} mg</p>
-          <p>Potassium: ${get("Potassium")} mg</p>
-          <p>Phosphorus: ${get("Phosphorus")} mg</p>
-          <p>Protein: ${get("Protein")} g</p>
+          <h3>Results for: ${food.description}</h3>
+          <p>Sodium: ${getNutrientAmount("Sodium")} mg</p>
+          <p>Potassium: ${getNutrientAmount("Potassium")} mg</p>
+          <p>Phosphorus: ${getNutrientAmount("Phosphorus")} mg</p>
+          <p>Protein: ${getNutrientAmount("Protein")} g</p>
         `;
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
         results.innerHTML = `<p class="error">Error fetching data. Please try again later.</p>`;
       }
     }
