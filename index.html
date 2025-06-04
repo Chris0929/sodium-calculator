@@ -1,166 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>CKD Nutrient Analyzer</title>
   <style>
     body {
-      background-color: #fef6f0;
       font-family: Arial, sans-serif;
+      background-color: #fef6f0;
       color: #333;
       padding: 20px;
     }
-    h1 { color: #4e766d; }
+    h1 {
+      color: #6c5b7b;
+    }
     textarea {
       width: 100%;
       height: 100px;
+      font-size: 16px;
       padding: 10px;
-      font-size: 1em;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      margin-bottom: 20px;
+      background-color: #fff0f5;
     }
     button {
       padding: 10px 20px;
-      background-color: #a8d5ba;
+      font-size: 16px;
+      background-color: #ffb6b9;
+      color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 1em;
+      border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #91c3a2;
-    }
-    .result, .recommendation {
+    .nutrients {
       margin-top: 20px;
-      background-color: #fff;
+      background-color: #f6eec7;
       padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border-radius: 5px;
     }
-    .alert {
-      color: #b33636;
+    .alerts {
+      color: red;
       font-weight: bold;
+    }
+    pre {
+      background: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
-  <h1>CKD Nutrient Analyzer</h1>
 
-  <div class="recommendation">
-    <p><strong>Sodium:</strong> ~2,000mg/day. Always consult a doctor or registered dietitian.</p>
-    <p><strong>Protein:</strong> 47–51g/day for those without diabetes, based on KDOQI guidelines.</p>
-    <p><strong>Calories:</strong> 2116–2962/day depending on activity and body size.</p>
-    <p><strong>Potassium:</strong> 2–4g/day (51–102 mmol/day) as per National Kidney Foundation.</p>
-    <p><strong>Phosphorus:</strong> 800–1,000mg/day to avoid blood buildup.</p>
-  </div>
+<h1>CKD Nutrient Analyzer</h1>
 
-  <textarea id="foodInput" placeholder="e.g., 2 tbsp peanut butter, 150g chicken breast..."></textarea>
-  <button onclick="analyzeFood()">Analyze</button>
+<p><strong>Important CKD Nutrient Guidelines:</strong></p>
+<ul>
+  <li><strong>Sodium:</strong> ≤ 2,000 mg/day</li>
+  <li><strong>Protein:</strong> 47 – 51 g/day</li>
+  <li><strong>Potassium:</strong> 2,000 – 4,000 mg/day</li>
+  <li><strong>Phosphorus:</strong> 800 – 1,000 mg/day</li>
+</ul>
 
-  <div class="result" id="results"></div>
+<p>
+For someone with CKD stage 3, the recommended daily sodium limit is generally around 2,000 milligrams (mg) per day; however, it's crucial to consult with your doctor or a registered dietitian to determine the most appropriate sodium intake based on your individual needs and kidney function.
+<br><br>
+For people with CKD who do not have diabetes following a low protein diet based on the KDOQI Guidelines (0.55 – 0.6g/kg/day): 47 – 51 grams of protein each day, 2116 – 2962 calories per day.
+<br><br>
+For someone with kidney disease stage G3, the recommended potassium limit is typically between 2-4 grams per day (51-102 mmol/day), according to the National Kidney Foundation guidelines; this means a potassium restricted diet should be followed to manage potential hyperkalemia due to impaired kidney function at this stage.
+<br><br>
+For someone with Stage 3 Chronic Kidney Disease (CKD), the recommended phosphorus limit is typically between 800mg and 1,000mg per day; this means limiting dietary intake of phosphorus to this range to manage potential buildup in the blood due to impaired kidney function.
+</p>
 
-  <script>
-    const apiKey = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+<textarea id="foodInput" placeholder="Enter food and amount, e.g. 2 tbsp peanut butter"></textarea>
+<button onclick="analyzeFood()">Analyze</button>
 
-    // Estimated conversion to grams for common volume units
-    const unitToGrams = {
-      tbsp: 15,
-      teaspoon: 5,
-      tsp: 5,
-      cup: 240,
-      oz: 28.35,
-      ml: 1,
-      g: 1,
-      gram: 1,
-      grams: 1,
-      kg: 1000
+<div class="nutrients" id="results"></div>
+
+<script>
+const apiKey = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+
+async function analyzeFood() {
+  const input = document.getElementById("foodInput").value;
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "Analyzing...";
+
+  try {
+    const searchRes = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(input)}&pageSize=1&api_key=${apiKey}`);
+    const searchData = await searchRes.json();
+    const food = searchData.foods[0];
+    const fdcId = food.fdcId;
+
+    const detailRes = await fetch(`https://api.nal.usda.gov/fdc/v1/food/${fdcId}?api_key=${apiKey}`);
+    const detailData = await detailRes.json();
+
+    const nutrients = {
+      Sodium: 0,
+      Potassium: 0,
+      Protein: 0,
+      Phosphorus: 0
     };
 
-    function parseQuantity(input) {
-      const regex = /^([\d.\/]+)\s*(tbsp|tsp|teaspoon|cup|oz|ml|g|gram|grams|kg)?\s*(.+)$/i;
-      const match = input.trim().match(regex);
+    const inputMatch = input.match(/^([\\d\\.]+)\\s*(\\w+)\\s+(.*)/i);
+    let inputAmount = 1;
+    let inputUnit = "g";
 
-      if (!match) return null;
-
-      let [_, qtyStr, unit, food] = match;
-      let quantity = eval(qtyStr.replace(" ", "+")); // handles "1 1/2"
-
-      unit = unit ? unit.toLowerCase() : "g";
-      const grams = unitToGrams[unit] || 1;
-      return {
-        quantity,
-        unit,
-        gramsEquivalent: quantity * grams,
-        foodName: food.trim()
-      };
+    if (inputMatch) {
+      inputAmount = parseFloat(inputMatch[1]);
+      inputUnit = inputMatch[2].toLowerCase();
     }
 
-    async function analyzeFood() {
-      const input = document.getElementById("foodInput").value.trim();
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "Loading...";
+    const matchPortion = detailData.foodPortions.find(p =>
+      p.modifier.toLowerCase().includes(inputUnit) ||
+      p.measureUnit.name.toLowerCase().includes(inputUnit)
+    );
 
-      const parsed = parseQuantity(input);
-      if (!parsed) {
-        resultsDiv.innerHTML = "<p>Please use a format like '2 tbsp peanut butter' or '150g chicken breast'.</p>";
-        return;
-      }
+    const grams = matchPortion ? (matchPortion.gramWeight * inputAmount) : 100;
 
-      try {
-        const searchURL = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(parsed.foodName)}&pageSize=1&api_key=${apiKey}`;
-        const response = await fetch(searchURL);
-        const data = await response.json();
+    detailData.foodNutrients.forEach(nutrient => {
+      const name = nutrient.nutrient.name;
+      if (name.includes("Sodium")) nutrients.Sodium += (nutrient.amount / 100) * grams;
+      if (name.includes("Potassium")) nutrients.Potassium += (nutrient.amount / 100) * grams;
+      if (name.includes("Protein")) nutrients.Protein += (nutrient.amount / 100) * grams;
+      if (name.includes("Phosphorus")) nutrients.Phosphorus += (nutrient.amount / 100) * grams;
+    });
 
-        if (!data.foods || data.foods.length === 0) {
-          resultsDiv.innerHTML = "<p>No food item found. Try something more specific.</p>";
-          return;
-        }
+    resultsDiv.innerHTML = `
+      <h3>Results for "${input}"</h3>
+      <pre>
+Sodium: ${nutrients.Sodium.toFixed(2)} mg
+Potassium: ${nutrients.Potassium.toFixed(2)} mg
+Protein: ${nutrients.Protein.toFixed(2)} g
+Phosphorus: ${nutrients.Phosphorus.toFixed(2)} mg
+      </pre>
+      <div class="alerts">
+        ${nutrients.Sodium > 2000 ? "⚠️ High Sodium<br>" : ""}
+        ${nutrients.Protein > 51 ? "⚠️ High Protein<br>" : ""}
+        ${nutrients.Potassium > 4000 ? "⚠️ High Potassium<br>" : ""}
+        ${nutrients.Phosphorus > 1000 ? "⚠️ High Phosphorus<br>" : ""}
+      </div>
+    `;
+  } catch (error) {
+    resultsDiv.innerHTML = "❌ Error fetching food data.";
+    console.error(error);
+  }
+}
+</script>
 
-        const food = data.foods[0];
-        const nutrients = food.foodNutrients;
-
-        let sodium = 0, potassium = 0, protein = 0, phosphorus = 0;
-
-        nutrients.forEach(n => {
-          switch (n.nutrientName.toLowerCase()) {
-            case "sodium, na": sodium = n.value; break;
-            case "potassium, k": potassium = n.value; break;
-            case "protein": protein = n.value; break;
-            case "phosphorus, p": phosphorus = n.value; break;
-          }
-        });
-
-        // USDA values are typically per 100g — scale to user grams
-        const scale = parsed.gramsEquivalent / 100;
-
-        const scaledSodium = sodium * scale;
-        const scaledPotassium = potassium * scale;
-        const scaledProtein = protein * scale;
-        const scaledPhosphorus = phosphorus * scale;
-
-        let alerts = [];
-        if (scaledSodium > 2000) alerts.push("Sodium exceeds 2,000mg/day");
-        if (scaledPotassium > 4000) alerts.push("Potassium exceeds 4,000mg/day");
-        if (scaledProtein > 51) alerts.push("Protein exceeds 51g/day");
-        if (scaledPhosphorus > 1000) alerts.push("Phosphorus exceeds 1,000mg/day");
-
-        resultsDiv.innerHTML = `
-          <h3>Result for: ${parsed.quantity} ${parsed.unit} ${parsed.foodName}</h3>
-          <ul>
-            <li><strong>Sodium:</strong> ${scaledSodium.toFixed(1)} mg</li>
-            <li><strong>Potassium:</strong> ${scaledPotassium.toFixed(1)} mg</li>
-            <li><strong>Protein:</strong> ${scaledProtein.toFixed(1)} g</li>
-            <li><strong>Phosphorus:</strong> ${scaledPhosphorus.toFixed(1)} mg</li>
-          </ul>
-          ${alerts.length ? `<p class="alert">⚠️ ${alerts.join("; ")}</p>` : "<p>No alerts. Nutrients within suggested range.</p>"}
-        `;
-      } catch (error) {
-        resultsDiv.innerHTML = "<p>Something went wrong. Please try again.</p>";
-        console.error(error);
-      }
-    }
-  </script>
 </body>
 </html>
