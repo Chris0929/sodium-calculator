@@ -2,161 +2,208 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>CKD Nutrient Analyzer - Safer Version</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CKD Nutrient Analyzer</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #fef6f0; padding: 20px; color: #333; }
-  h1 { color: #6c5b7b; }
-  textarea { width: 100%; height: 100px; font-size: 16px; padding: 10px; margin-bottom: 20px; background: #fff0f5; }
-  button { padding: 10px 20px; font-size: 16px; background: #ffb6b9; color: white; border: none; border-radius: 5px; cursor: pointer; }
-  .nutrients { margin-top: 20px; background: #f6eec7; padding: 15px; border-radius: 5px; }
-  .alerts { color: red; font-weight: bold; }
-  pre { background: #fff; padding: 10px; border-radius: 5px; overflow-x: auto; }
-  .disclaimer { margin-top: 30px; font-size: 0.9em; color: #b33; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fef6f0;
+    color: #4b3b2b;
+    margin: 0; padding: 1rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  h1, h2 {
+    color: #7d5a50;
+  }
+  textarea, input, select, button {
+    font-size: 1rem;
+    padding: 0.5rem;
+    margin-top: 0.3rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1bfa7;
+    border-radius: 5px;
+  }
+  button {
+    background: #b2855f;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #8e6743;
+  }
+  .results {
+    background: #fff3e6;
+    border: 1px solid #d1bfa7;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  .alerts {
+    color: #a94442;
+    font-weight: bold;
+    margin-top: 0.5rem;
+  }
+  .guidance {
+    background: #f9f2ec;
+    border-left: 5px solid #d1bfa7;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
 </style>
 </head>
 <body>
+<h1>CKD Nutrient Analyzer</h1>
 
-<h1>CKD Nutrient Analyzer - Safer Version</h1>
+<div class="guidance">
+  <p><strong>For someone with CKD stage 3, the recommended daily sodium limit is generally around 2,000 milligrams (mg) per day; however, it's crucial to consult with your doctor or a registered dietitian to determine the most appropriate sodium intake based on your individual needs and kidney function.</strong></p>
+  <p><strong>For people with CKD who do not have diabetes following a low protein diet based on the KDOQI Guidelines (0.55 – 0.6g/kg/day):</strong><br/>47 – 51 grams of protein each day<br/>2116 – 2962 calories per day</p>
+  <p><strong>For someone with kidney disease stage G3, the recommended potassium limit is typically between 2-4 grams per day (51-102 mmol/day), according to the National Kidney Foundation guidelines; this means a potassium restricted diet should be followed to manage potential hyperkalemia due to impaired kidney function at this stage.</strong></p>
+  <p><strong>For someone with Stage 3 Chronic Kidney Disease (CKD), the recommended phosphorus limit is typically between 800mg and 1,000mg per day; this means limiting dietary intake of phosphorus to this range to manage potential buildup in the blood due to impaired kidney function.</strong></p>
+</div>
 
-<p>Please consult a healthcare professional before making dietary decisions based on this tool.</p>
+<label for="food-input">Enter food and amount (e.g., "100 g spinach", "1 tbsp olive oil"):</label>
+<input id="food-input" type="text" placeholder="e.g. 100 g spinach" />
 
-<textarea id="foodInput" placeholder="Enter food with quantity (e.g. '2 tbsp peanut butter')"></textarea>
-<button onclick="analyzeFood()">Analyze</button>
+<button id="analyze-btn">Analyze Nutrients</button>
 
-<div class="nutrients" id="results"></div>
+<div class="results" id="results" aria-live="polite"></div>
 
 <script>
-const apiKey = "TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ";
+  const apiKey = 'TP6duc7H0lDuNEKyPrpR49mtr5dJqTNwYw8vjgKZ';
 
-// Basic unit to grams conversion for common cooking units (approximate, water density assumptions)
-const unitToGrams = {
-  g: 1,
-  gram: 1,
-  grams: 1,
-  tsp: 4.2,     // approx weight in grams for water-like density
-  tbsp: 14.3,
-  cup: 240,
-  oz: 28.35,
-  ml: 1,       // assuming density like water
-};
-
-function parseInput(input) {
-  // Extract quantity, unit, and food description
-  const regex = /^([\d.]+)\s*(\w+)\s+(.*)$/;
-  const match = input.trim().toLowerCase().match(regex);
-  if (!match) return null;
-  return {
-    quantity: parseFloat(match[1]),
-    unit: match[2],
-    food: match[3],
+  // Unit to grams conversion factors for common units
+  const unitToGrams = {
+    g: 1,
+    gram: 1,
+    grams: 1,
+    mg: 0.001,
+    tsp: 4.93,
+    tbsp: 14.79,
+    oz: 28.35,
+    cup: 240,
+    ml: 1, // assuming water-like density, will fallback if not
   };
-}
 
-async function analyzeFood() {
-  const inputStr = document.getElementById("foodInput").value;
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "Analyzing...";
+  // Parse user input to extract quantity, unit, and food name
+  function parseInput(input) {
+    // Simple regex: quantity (number), unit (letters), food name (rest)
+    const regex = /^\s*([\d.]+)\s*([a-zA-Z]+)\s+(.+)$/;
+    const match = input.trim().match(regex);
+    if (!match) return null;
 
-  const parsed = parseInput(inputStr);
-  if (!parsed) {
-    resultsDiv.innerHTML = "<span class='alerts'>❌ Please enter quantity, unit, and food name, e.g. '2 tbsp peanut butter'</span>";
-    return;
+    let quantity = parseFloat(match[1]);
+    let unit = match[2].toLowerCase();
+    let food = match[3].toLowerCase();
+
+    if (!unitToGrams[unit]) return null; // unsupported unit
+
+    return { quantity, unit, food };
   }
 
-  if (!unitToGrams.hasOwnProperty(parsed.unit)) {
-    resultsDiv.innerHTML = `<span class='alerts'>❌ Unit "${parsed.unit}" not supported. Use g, tsp, tbsp, cup, oz, or ml.</span>`;
-    return;
-  }
+  async function analyzeFood() {
+    const input = document.getElementById('food-input').value;
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = 'Loading...';
 
-  try {
-    // Search food in USDA API
-    const searchResponse = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(parsed.food)}&pageSize=1&api_key=${apiKey}`);
-    const searchData = await searchResponse.json();
-
-    if (!searchData.foods || searchData.foods.length === 0) {
-      resultsDiv.innerHTML = `<span class='alerts'>❌ Food not found in USDA database.</span>`;
+    const parsed = parseInput(input);
+    if (!parsed) {
+      resultsDiv.innerHTML = '<span class="alerts">Please enter valid input like "100 g spinach" or "1 tbsp olive oil".</span>';
       return;
     }
 
-    const food = searchData.foods[0];
+    // Convert quantity + unit to grams
+    let grams = parsed.quantity * unitToGrams[parsed.unit];
 
-    // Fetch food details
-    const detailResponse = await fetch(`https://api.nal.usda.gov/fdc/v1/food/${food.fdcId}?api_key=${apiKey}`);
-    const detailData = await detailResponse.json();
+    // Fetch USDA data
+    try {
+      // Search food
+      const searchRes = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(parsed.food)}&pageSize=1`);
+      const searchData = await searchRes.json();
 
-    // Calculate grams from input quantity * unit conversion
-    const gramsFromUser = parsed.quantity * unitToGrams[parsed.unit];
-
-    // Check if USDA foodPortions includes matching unit to improve accuracy
-    // Try to find USDA portion that matches unit for better gramWeight (e.g. 1 tbsp = 14.3g)
-    let matchedPortionGramWeight = null;
-    if (detailData.foodPortions && detailData.foodPortions.length > 0) {
-      for (const portion of detailData.foodPortions) {
-        const unitName = (portion.measureUnit && portion.measureUnit.name) ? portion.measureUnit.name.toLowerCase() : "";
-        const modifier = portion.modifier ? portion.modifier.toLowerCase() : "";
-        if (unitName.includes(parsed.unit) || modifier.includes(parsed.unit)) {
-          matchedPortionGramWeight = portion.gramWeight;
-          break;
-        }
+      if (!searchData.foods || searchData.foods.length === 0) {
+        resultsDiv.innerHTML = `<span class="alerts">No USDA data found for "${parsed.food}".</span>`;
+        return;
       }
-    }
 
-    // Use USDA portion weight if matched, else fallback to user gramsFromUser
-    const gramsToUse = matchedPortionGramWeight ? matchedPortionGramWeight * parsed.quantity : gramsFromUser;
+      const foodId = searchData.foods[0].fdcId;
 
-    // Nutrient mapping (some nutrients might have different names; map accordingly)
-    const nutrientMap = {
-      "Sodium, Na": "Sodium",
-      "Potassium, K": "Potassium",
-      "Protein": "Protein",
-      "Phosphorus, P": "Phosphorus"
-    };
+      // Fetch food nutrient details
+      const foodRes = await fetch(`https://api.nal.usda.gov/fdc/v1/food/${foodId}?api_key=${apiKey}`);
+      const foodData = await foodRes.json();
 
-    // Initialize nutrient sums
-    let nutrients = {
-      Sodium: 0,
-      Potassium: 0,
-      Protein: 0,
-      Phosphorus: 0,
-    };
+      // Extract nutrients of interest
+      const nutrientsMap = {
+        'Sodium, Na': 'sodium',
+        'Potassium, K': 'potassium',
+        'Protein': 'protein',
+        'Phosphorus, P': 'phosphorus'
+      };
 
-    // Aggregate nutrient amounts scaled to gramsToUse (nutrient.amount is per 100g)
-    detailData.foodNutrients.forEach(nutr => {
-      for (const [apiName, key] of Object.entries(nutrientMap)) {
-        if (nutr.nutrient.name === apiName) {
-          nutrients[key] += (nutr.amount / 100) * gramsToUse;
+      let nutrientValues = {
+        sodium: 0,
+        potassium: 0,
+        protein: 0,
+        phosphorus: 0
+      };
+
+      // Some nutrients might have different names, so map carefully
+      foodData.foodNutrients.forEach(nutrient => {
+        const name = nutrient.nutrientName;
+        if (nutrientsMap[name]) {
+          nutrientValues[nutrientsMap[name]] = nutrient.value || 0;
         }
-      }
-    });
+      });
 
-    // Round to 2 decimals
-    for (const key in nutrients) {
-      nutrients[key] = Math.round(nutrients[key] * 100) / 100;
+      // USDA nutrients are per 100g, scale to grams input
+      const nutrients = {
+        sodium: (nutrientValues.sodium * grams) / 100,
+        potassium: (nutrientValues.potassium * grams) / 100,
+        protein: (nutrientValues.protein * grams) / 100,
+        phosphorus: (nutrientValues.phosphorus * grams) / 100
+      };
+
+      // CKD recommended daily limits
+      const limits = {
+        sodium: 2000,
+        potassiumMin: 2000,
+        potassiumMax: 4000,
+        proteinMin: 47,
+        proteinMax: 51,
+        phosphorusMin: 800,
+        phosphorusMax: 1000
+      };
+
+      let alerts = [];
+
+      if (nutrients.sodium > limits.sodium) alerts.push(`⚠️ Sodium exceeds CKD recommended limit (${limits.sodium} mg)`);
+      if (nutrients.potassium < limits.potassiumMin) alerts.push(`⚠️ Potassium below CKD recommended minimum (${limits.potassiumMin} mg)`);
+      if (nutrients.potassium > limits.potassiumMax) alerts.push(`⚠️ Potassium exceeds CKD recommended max (${limits.potassiumMax} mg)`);
+      if (nutrients.protein < limits.proteinMin) alerts.push(`⚠️ Protein below CKD recommended minimum (${limits.proteinMin} g)`);
+      if (nutrients.protein > limits.proteinMax) alerts.push(`⚠️ Protein exceeds CKD recommended max (${limits.proteinMax} g)`);
+      if (nutrients.phosphorus < limits.phosphorusMin) alerts.push(`⚠️ Phosphorus below CKD recommended minimum (${limits.phosphorusMin} mg)`);
+      if (nutrients.phosphorus > limits.phosphorusMax) alerts.push(`⚠️ Phosphorus exceeds CKD recommended max (${limits.phosphorusMax} mg)`);
+
+      resultsDiv.innerHTML = `
+        <h2>Nutrition for ${parsed.quantity} ${parsed.unit} ${parsed.food}</h2>
+        <p>Sodium: ${nutrients.sodium.toFixed(1)} mg</p>
+        <p>Potassium: ${nutrients.potassium.toFixed(1)} mg</p>
+        <p>Protein: ${nutrients.protein.toFixed(2)} g</p>
+        <p>Phosphorus: ${nutrients.phosphorus.toFixed(1)} mg</p>
+        ${alerts.length ? `<div class="alerts">${alerts.join('<br>')}</div>` : '<p style="color:green;">All nutrients within recommended CKD limits.</p>'}
+      `;
+
+    } catch (e) {
+      resultsDiv.innerHTML = `<span class="alerts">Error fetching data: ${e.message}</span>`;
     }
-
-    // Build alerts based on CKD stage 3 limits
-    let alertMsgs = [];
-    if (nutrients.Sodium > 2000) alertMsgs.push("⚠️ High Sodium (>2000 mg)");
-    if (nutrients.Protein > 51) alertMsgs.push("⚠️ High Protein (>51 g)");
-    if (nutrients.Potassium > 4000) alertMsgs.push("⚠️ High Potassium (>4000 mg)");
-    if (nutrients.Phosphorus > 1000) alertMsgs.push("⚠️ High Phosphorus (>1000 mg)");
-
-    resultsDiv.innerHTML = `
-      <h3>Results for "${parsed.quantity} ${parsed.unit} ${parsed.food}"</h3>
-      <pre>
-Sodium: ${nutrients.Sodium} mg
-Potassium: ${nutrients.Potassium} mg
-Protein: ${nutrients.Protein} g
-Phosphorus: ${nutrients.Phosphorus} mg
-      </pre>
-      <div class="alerts">${alertMsgs.join("<br>")}</div>
-    `;
-
-  } catch (err) {
-    console.error(err);
-    resultsDiv.innerHTML = `<span class='alerts'>❌ Error fetching or processing data. Please try again.</span>`;
   }
-}
+
+  document.getElementById('analyze-btn').addEventListener('click', analyzeFood);
 </script>
 
 </body>
